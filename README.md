@@ -9,7 +9,9 @@ project/
 │   ├── callbacks.py         ← all CallbackQueryHandlers
 │   └── messages.py          ← text/voice/photo MessageHandlers
 ├── services/
-│   └── gpt_service.py       ← ChatGptService (cleaned up)
+│   ├── base.py              ← Abstract base class for all AI service implementations
+│   ├── factory.py           ← Factory function for creating the active AI service
+│   └── openai_service.py    ← OpenAI-compatible service
 ├── utils/
 │   ├── messaging.py         ← send_text, send_image, etc.
 │   └── resources.py         ← load_message, load_prompt
@@ -21,6 +23,5 @@ project/
 ├── .env                     ← secrets (not committed)
 ├── .env.example             ← template (committed)
 ├── .gitignore
-├── Dockerfile
-└── requirements.txt
+└── Dockerfile
 ```
