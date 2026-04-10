@@ -31,7 +31,7 @@ from telegram.ext import ContextTypes
 
 logger = logging.getLogger(__name__)
 
-async def send_message(
+async def send_text(
         update: Update,
         context: ContextTypes.DEFAULT_TYPE,
         text: str,
