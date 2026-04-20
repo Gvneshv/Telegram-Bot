@@ -1,0 +1,66 @@
+# =============================================================================
+# Defines the bot service for local development and server deployment.
+#
+# Usage:
+#   Start (detached):  docker compose up -d
+#   View logs:         docker compose logs -f
+#   Stop:              docker compose down
+#   Rebuild image:     docker compose up -d --build
+#
+# Secrets:
+#   Tokens and API keys are read from the local `.env` file via `env_file`.
+#   The `.env` file is never copied into the image — it is injected at
+#   container startup only. See .env.example for required variables.
+#
+# Volumes:
+#   The `resources/` directory is mounted as a read-only bind mount.
+#   This means you can update prompt or message text files on the host
+#   and they take effect without rebuilding the image — just restart
+#   the container with `docker compose restart`.
+# =============================================================================
+services:
+  bot:
+    # Build the image from the Dockerfile in the current directory.
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    # Human-readable container name (shown in `docker ps`).
+    container_name: telegram-bot
+
+    # Load environment variables from the local .env file.
+    # These become available to the process as regular env vars, which
+    # config.py reads via os.getenv(). The file is NOT baked into the image.
+    env_file:
+      - .env
+    
+    # Restart automatically if the process crashes or the server reboots.
+    # "unless-stopped" means: restart always, except when you explicitly
+    # run `docker compose stop` or `docker compose down`.
+    restart: unless-stopped
+
+    # Mount the resources directory as read-only.
+    # Prompt and message text files can be edited on the host without
+    # a full image rebuild — just `docker compose restart` after edits.
+    volumes:
+      - ./resources:/app/resources:ro
+    
+    # Resource limits — prevents the bot from consuming unbounded memory
+    # on the host in case of a memory leak or runaway loop.
+    # Adjust these values based on your server's available resources.
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+    
+    # Healthcheck: verifies the Python process is alive every 30 seconds.
+    # If it fails 3 times in a row, Docker marks the container as unhealthy
+    # (and combined with `restart: unless-stopped`, will restart it).
+    healthcheck:
+      test: ["CMD", "python", "-c","import os; os.getpid()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

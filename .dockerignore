@@ -1,0 +1,51 @@
+# .dockerignore
+# -------------
+# Files and directories excluded from the Docker build context.
+#
+# The build context is everything Docker sends to the daemon when you run
+# `docker build`. Excluding unnecessary files makes builds faster (less
+# data to transfer) and prevents sensitive files from being accidentally
+# baked into the image.
+ 
+ 
+# --- Version control ---
+.git
+.gitignore
+ 
+# --- Secrets (critical — must never end up in an image) ---
+.env
+credentials.py
+ 
+# --- Python cache ---
+__pycache__
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+ 
+# --- Virtual environments ---
+.venv
+venv
+env
+ 
+# --- Temporary bot files (generated at runtime, not needed at build time) ---
+*.mp3
+*.jpg
+image_*.jpg
+voice_*.mp3
+ 
+# --- Development / editor files ---
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+ 
+# --- Documentation (not needed at runtime) ---
+README.md
+CHANGELOG.md
+ 
+# --- Docker files themselves (no need to copy into the image) ---
+Dockerfile
+docker-compose.yml
+.dockerignore
