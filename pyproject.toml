@@ -1,0 +1,122 @@
+[tool.poetry]
+name        = "telegram-gpt-bot"
+version     = "2.0.0"
+description = "A Telegram bot with GPT-powered features: chat, quiz, translator, voice, CV generator, and more."
+authors     = ["gxneshx"]
+readme      = "README.md"
+license     = "MIT"
+ 
+# Tell Poetry where the Python source lives (the project root in this case,
+# since we don't have a src/ layout).
+packages = [{ include = "." }]
+ 
+ 
+# =============================================================================
+# Runtime dependencies
+# =============================================================================
+# These are the packages required to run the bot.
+# Specify minimum versions rather than exact pins here — Poetry's lock file
+# (poetry.lock) records the exact resolved versions for reproducible installs.
+#
+# To add a dependency:   poetry add <package>
+# To remove one:         poetry remove <package>
+# To update all:         poetry update
+# After any change, regenerate requirements.txt for Docker:
+#   poetry export -f requirements.txt --without-hashes -o requirements.txt
+ 
+[tool.poetry.dependencies]
+python            = "^3.12"
+ 
+# Telegram Bot API wrapper — the core framework for the bot.
+python-telegram-bot = "^21.0"
+ 
+# OpenAI Python SDK — used for chat completions, Whisper STT, TTS, and vision.
+# Also works with Groq's OpenAI-compatible API.
+openai            = "^1.30"
+ 
+# HTTP client — passed to the OpenAI client for connection control.
+httpx             = "^0.27"
+ 
+# Loads .env files into the process environment.
+python-dotenv     = "^1.0"
+ 
+ 
+# =============================================================================
+# Development dependencies
+# =============================================================================
+# Only installed locally (not in Docker). Never end up in the production image.
+#
+# To install dev deps:   poetry install (installs everything by default)
+# To install prod only:  poetry install --only main
+ 
+[tool.poetry.group.dev.dependencies]
+# Test framework
+pytest            = "^8.0"
+pytest-asyncio    = "^0.23"
+ 
+# Linter — catches style issues and common mistakes.
+ruff              = "^0.4"
+ 
+# Static type checker (optional but recommended as you grow the project).
+mypy              = "^1.10"
+ 
+ 
+# =============================================================================
+# Build system
+# =============================================================================
+# Required by PEP 517/518. Tells pip and other tools how to build this
+# package. Poetry-core is the backend used by Poetry.
+ 
+# =============================================================================
+# Required Poetry plugins
+# =============================================================================
+# poetry-plugin-export was removed from Poetry core in v2.0 and is now a
+# separate plugin. It is still officially maintained by the Poetry team.
+#
+# Install it once on your machine with:
+#   poetry self add poetry-plugin-export
+#
+# After that, generate requirements.txt for Docker with:
+#   poetry export -f requirements.txt --without-hashes -o requirements.txt
+ 
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
+ 
+ 
+[build-system]
+requires      = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+ 
+ 
+# =============================================================================
+# Tool configuration
+# =============================================================================
+ 
+[tool.ruff]
+# Maximum line length. 100 is a common modern choice — wider than PEP 8's
+# 79 but still readable on split screens.
+line-length = 100
+ 
+[tool.ruff.lint]
+# E/W = pycodestyle errors and warnings (basic style)
+# F   = pyflakes (unused imports, undefined names)
+# I   = isort (import ordering)
+# UP  = pyupgrade (modernise Python syntax)
+select = ["E", "W", "F", "I", "UP"]
+ 
+# Ignore line-too-long for lines that contain URLs (can't wrap a URL).
+ignore = ["E501"]
+ 
+[tool.pytest.ini_options]
+# Makes pytest-asyncio automatically handle async test functions without
+# requiring the @pytest.mark.asyncio decorator on every one.
+asyncio_mode = "auto"
+ 
+# Tell pytest where to find tests.
+testpaths = ["tests"]
+ 
+[tool.mypy]
+python_version = "3.12"
+# Start with warn-only settings — tighten as you add type annotations.
+ignore_missing_imports = true
+warn_return_any        = true
