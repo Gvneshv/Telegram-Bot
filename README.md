@@ -1,27 +1,263 @@
-## A new temporary README file with the new project tree structure so far
+# Telegram GPT Bot
+
+A feature-rich Telegram bot powered by OpenAI (or Groq as a free alternative),
+built with Python and `python-telegram-bot`.
+
+---
+
+## Features
+
+| Command | Description |
+|---|---|
+| `/start` | Main menu |
+| `/random` | Random interesting fact |
+| `/gpt` | Free-form AI chat |
+| `/talk` | Converse with a historical persona (Cobain, Tolkien, Hawking, and more) |
+| `/quiz` | Quiz on Python, Math, or Biology |
+| `/translator` | Translate text into English, German, Italian, French, or Spanish |
+| `/voice_chat_gpt` | Voice message mode — speak and receive a voice reply |
+| `/recommendations` | Movie, book, and music recommendations |
+| `/image_recognition` | Describe or analyse an image |
+| `/cv` | AI-assisted CV generator |
+
+---
+
+## Requirements
+
+- Python 3.12+
+- [Poetry](https://python-poetry.org/) (for local development)
+- A Telegram bot token from [@BotFather](https://t.me/BotFather)
+- An API key from [OpenAI](https://platform.openai.com/) **or** [Groq](https://console.groq.com/) (free)
+- Docker + Docker Compose (for containerised deployment — optional)
+
+---
+
+## Quick start
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Gvneshv/Telegram-Bot.git
+cd Telegram-Bot
+```
+
+### 2. Configure your environment
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and fill in your values:
+
+```env
+BOT_TOKEN=your-telegram-bot-token
+OPENAI_API_KEY=your-api-key        # OpenAI key OR Groq key
+AI_PROVIDER=openai                 # "openai" or "groq"
+```
+
+> **Using Groq instead of OpenAI?**
+> Set `AI_PROVIDER=groq` and paste your Groq key into `OPENAI_API_KEY`.
+> The correct base URL and default model are selected automatically.
+> Groq is free, fast, and requires no credit card. Get a key at https://console.groq.com.
+>
+> **Note:** Voice (Whisper STT + TTS) and image recognition features require
+> an OpenAI key with the appropriate access level. They are not available on Groq.
+
+### 3. Install dependencies and run locally
+
+```bash
+# Install Poetry (once, globally on your machine)
+pip install poetry
+
+# Install the export plugin (once, globally — see Dependency workflow below)
+poetry self add poetry-plugin-export
+
+# Install project dependencies into a managed virtual environment
+poetry install
+
+# Start the bot
+poetry run python main.py
+```
+
+### 4. Or run with Docker
+
+```bash
+# Generate requirements.txt from the Poetry lock file (needed by Docker)
+poetry export -f requirements.txt --without-hashes -o requirements.txt
+
+# Build the image and start the container
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# Stop
+docker compose down
+```
+
+---
+
+## Project structure
 
 ```
-project/
-├── main.py                  ← entry point, builds and runs the app
-├── config.py                ← loads tokens from env vars
+├── main.py                   ← Entry point: logging, handler registration, polling
+├── config.py                 ← Loads all settings from environment variables
+├── state.py                  ← Per-user dialog state (fixes shared-state bug from v1)
+│
 ├── handlers/
-│   ├── commands.py          ← start, random, gpt, talk, quiz, etc.
-│   ├── callbacks.py         ← all CallbackQueryHandlers
-│   └── messages.py          ← text/voice/photo MessageHandlers
+│   ├── commands.py           ← All slash command handlers (/start, /gpt, /quiz, …)
+│   ├── callbacks.py          ← All inline keyboard button handlers
+│   └── messages.py           ← Text, voice, and photo message router + handlers
+│
 ├── services/
-│   ├── base.py              ← Abstract base class for all AI service implementations
-│   ├── factory.py           ← Factory function for creating the active AI service
-│   └── openai_service.py    ← OpenAI-compatible service
+│   ├── base.py               ← AIService abstract interface
+│   ├── openai_service.py     ← OpenAI/Groq implementation
+│   ├── factory.py            ← Builds the correct service from config
+│   └── __init__.py
+│
 ├── utils/
-│   ├── messaging.py         ← send_text, send_image, etc.
-│   └── resources.py         ← load_message, load_prompt
-├── state.py                 ← DialogState class (instance attributes, not class-level)
+│   ├── messaging.py          ← Telegram send helpers (send_text, send_image, …)
+│   ├── resources.py          ← Loads text files from resources/
+│   └── __init__.py
+│
 ├── resources/
-│   ├── images/
-│   ├── messages/
-│   └── prompts/
-├── .env                     ← secrets (not committed)
-├── .env.example             ← template (committed)
-├── .gitignore
-└── Dockerfile
+│   ├── images/               ← Feature images sent to the user
+│   ├── messages/             ← Intro text for each feature (*.txt)
+│   └── prompts/              ← AI system prompts for each feature (*.txt)
+│
+├── .env                      ← Your secrets (never committed)
+├── .env.example              ← Template — commit this, not .env
+├── pyproject.toml            ← Poetry project config and tool settings
+├── poetry.lock               ← Exact resolved dependency versions (committed)
+├── requirements.txt          ← Generated by Poetry for Docker (committed)
+├── Dockerfile                ← Multi-stage production image
+├── docker-compose.yml        ← Service definition with env injection and volumes
+└── .dockerignore             ← Excludes .env, caches, and temp files from builds
 ```
+
+---
+
+## Dependency workflow
+
+This project uses a **hybrid approach**: Poetry for local development, plain pip inside Docker.
+Here is precisely why and how it works.
+
+### Why not just use a requirements.txt?
+
+A hand-written `requirements.txt` has no lock file. Two developers running `pip install` a month
+apart can end up with different sub-dependency versions, causing subtle bugs that are hard to trace.
+Poetry solves this with `poetry.lock`, which pins every package and every sub-dependency to an exact
+version, guaranteeing identical environments across machines and time.
+
+### Why not use Poetry inside Docker too?
+
+Poetry is a development tool (~50 MB). Installing it inside a Docker image just to run
+`poetry install` adds weight and build time without any benefit — by the time you build the image,
+all dependency resolution is already done and recorded in `poetry.lock`. Docker only needs the
+resolved list of packages, which pip can install directly from a plain `requirements.txt`.
+
+### How the two sides connect
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  YOUR MACHINE (local development)                       │
+│                                                         │
+│  poetry add <package>                                   │
+│    → updates pyproject.toml  (human-readable config)    │
+│    → updates poetry.lock     (exact resolved versions)  │
+│                                                         │
+│  poetry install                                         │
+│    → reads poetry.lock, installs into virtual env       │
+│    → guarantees identical versions every time           │
+│                                                         │
+│  poetry export -f requirements.txt \                    │
+│    --without-hashes -o requirements.txt                 │
+│    → reads poetry.lock                                  │
+│    → writes pip-format snapshot (do not edit by hand)   │
+│                                                         │
+│  git add pyproject.toml poetry.lock requirements.txt    │
+│  git commit                                             │
+└──────────────────────────┬──────────────────────────────┘
+                           │ git push / deploy
+┌──────────────────────────▼──────────────────────────────┐
+│  DOCKER (server)                                        │
+│                                                         │
+│  COPY requirements.txt .                                │
+│  RUN pip install -r requirements.txt                    │
+│    → exact same versions as poetry.lock                 │
+│    → Poetry is never installed here                     │
+│                                                         │
+│  CMD python main.py                                     │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Day-to-day commands
+
+```bash
+# Add a new package
+poetry add <package-name>
+
+# Add a dev-only package (not installed in Docker)
+poetry add --group dev <package-name>
+
+# Update all packages to latest allowed versions
+poetry update
+
+# After any add or update — regenerate the Docker input file
+poetry export -f requirements.txt --without-hashes -o requirements.txt
+
+# Run the bot locally
+poetry run python main.py
+
+# Rebuild Docker image after dependency changes
+docker compose up -d --build
+```
+
+> **Important:** `requirements.txt` is generated automatically from `poetry.lock`.
+> Never edit it by hand — your changes will be overwritten the next time you run `poetry export`.
+
+---
+
+## AI providers
+
+The bot is designed to work with any OpenAI-compatible API. Switching providers
+requires only two lines in your `.env` file.
+
+| Provider | `AI_PROVIDER` | Cost | Voice/Vision |
+|---|---|---|---|
+| OpenAI | `openai` | Paid (free trial credits for new accounts) | ✅ Full support |
+| Groq | `groq` | Free tier available | ❌ Text only |
+
+To switch to Groq:
+
+```env
+OPENAI_API_KEY=your-groq-key-here
+AI_PROVIDER=groq
+```
+
+The correct API base URL (`https://api.groq.com/openai/v1`) and default model
+(`llama3-70b-8192`) are set automatically when `AI_PROVIDER=groq`.
+
+---
+
+## Adding a new AI provider (future feature)
+
+The AI layer uses a clean interface (`services/base.py`). To add a new provider:
+
+1. Create `services/<name>_service.py` that subclasses `AIService`.
+2. Add a branch for it in `services/factory.py`.
+3. Add the provider name to `.env.example`.
+
+Nothing outside `services/` needs to change.
+
+---
+
+## Version history
+
+See [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## License
+
+MIT
