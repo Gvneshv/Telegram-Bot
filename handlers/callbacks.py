@@ -90,40 +90,40 @@ _ROUTES: dict[str, object] = {
     # import between this module and handlers/commands.py.
 
     # --- Quiz ---
-    "quiz_prog": lambda u, c: _set_quiz_theme_and_ask(u, c, "quiz_prog"),
-    "quiz_math": lambda u, c: _set_quiz_theme_and_ask(u, c, "quiz_math"),
-    "quiz_biology": lambda u, c: _set_quiz_theme_and_ask(u, c, "quiz_biology"),
-    "quiz_more": _quiz_more,
-    "quiz_change_theme": _quiz_change_theme,
-    "quiz_end_btn": start,
+    "Програмування": lambda u, c: _set_quiz_theme_and_ask(u, c, "quiz_prog"),
+    "Математика": lambda u, c: _set_quiz_theme_and_ask(u, c, "quiz_math"),
+    "Біологія": lambda u, c: _set_quiz_theme_and_ask(u, c, "quiz_biology"),
+    "Більше питань": _quiz_more,
+    "Змінити тему": _quiz_change_theme,
+    "Закінчити": start,
 
     # --- Talk (persona selection) ---
-    "talk_1": lambda u, c: start_persona(u, c, "talk_1"),
-    "talk_2": lambda u, c: start_persona(u, c, "talk_2"),
-    "talk_3": lambda u, c: start_persona(u, c, "talk_3"),
-    "talk_4": lambda u, c: start_persona(u, c, "talk_4"),
-    "talk_5": lambda u, c: start_persona(u, c, "talk_5"),
-    "talk_end_btn": start,
+    "Курт Кобейн": lambda u, c: start_persona(u, c, "talk_1"),
+    "Колишня Королева Об'єднаного Королівства": lambda u, c: start_persona(u, c, "talk_2"),
+    "Джон Толкін": lambda u, c: start_persona(u, c, "talk_3"),
+    "Нітцше": lambda u, c: start_persona(u, c, "talk_4"),
+    "Стівен Гокінг": lambda u, c: start_persona(u, c, "talk_5"),
+    "Закінчити": start,
 
     # --- Translator ---
-    "translate_english": lambda u, c: select_language(u, c, "translate_english"),
-    "translate_german": lambda u, c: select_language(u, c, "translate_german"),
-    "translate_italian": lambda u, c: select_language(u, c, "translate_italian"),
-    "translate_french": lambda u, c: select_language(u, c, "translate_french"),
-    "translate_spanish": lambda u, c: select_language(u, c, "translate_spanish"),    
-    "translate_change": translator,
-    "translate_end_btn": start,
+    "Англійська 🇬🇧": lambda u, c: select_language(u, c, "Англійська 🇬🇧"),
+    "Німецька 🇩🇪": lambda u, c: select_language(u, c, "translate_german"),
+    "Італійська 🇮🇹": lambda u, c: select_language(u, c, "translate_italian"),
+    "Французька 🇫🇷": lambda u, c: select_language(u, c, "translate_french"),
+    "Іспанська 🇪🇸": lambda u, c: select_language(u, c, "translate_spanish"),    
+    "Змінити мову": translator,
+    "Закінчити переклад": start,
 
     # --- Recommendations ---
-    "recommendations_movies": lambda u, c: select_category(u, c, "movies"),
-    "recommendations_books": lambda u, c: select_category(u, c, "books"),
-    "recommendations_music": lambda u, c: select_category(u, c, "music"),
-    "recommendations_dislike": lambda u, c: select_category(u, c, feedback="dislike"),
-    "recommendations_end_btn": _recommendations_end,
+    "Рекомендації фільмів": lambda u, c: select_category(u, c, "movies"),
+    "Рекомендації книг": lambda u, c: select_category(u, c, "books"),
+    "Рекомендації музики": lambda u, c: select_category(u, c, "music"),
+    "Не подобається": lambda u, c: select_category(u, c, feedback="dislike"),
+    "Закінчити": _recommendations_end,
 
     # --- CV ---
-    "cv_start_over": _cv_start_over,
-    "cv_end_btn": start,
+    "Почати спочатку": _cv_start_over,
+    "Закінчити": start,
 }
 
 

@@ -20,6 +20,7 @@ Or via Docker:
     docker compose up
 """
 
+import asyncio
 import html
 import json
 import logging
@@ -188,12 +189,25 @@ def main() -> None:
  
     Builds the ``Application``, registers handlers, and begins long-polling
     for Telegram updates. Blocks until interrupted (Ctrl-C or SIGTERM).
+
+    Note on Python 3.14 compatibility:
+        In Python 3.14, ``asyncio.get_event_loop()`` no longer creates a new
+        event loop automatically if none exists — it raises ``RuntimeError``
+        instead. ``python-telegram-bot``'s ``run_polling()`` calls this
+        internally, so we must explicitly create and register an event loop
+        before calling it. This is safe and correct on all Python versions.
     """
     _configure_logging()
 
     logger = logging.getLogger(__name__)
     config.log_config_summary()
     logger.info("Starting bot...")
+
+    # Python 3.14 compatibility: explicitly create an event loop before
+    # run_polling() is called, since asyncio.get_event_loop() no longer
+    # creates one automatically.
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
     app = ApplicationBuilder().token(config.BOT_TOKEN).build()
     _register_handlers(app)

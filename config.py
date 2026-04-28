@@ -89,7 +89,7 @@ AI_MODEL: str = os.getenv("AI_MODEL", "").strip() or _DEFAULT_MODELS.get(AI_PROV
 # base URL is None, so we only need to set this explicitly for other providers.
 _DEFAULT_BASE_URLS: dict[str, str] = {
     "openai": None,  # SDK default
-    "groq": "https://api.groq.com/v1",
+    "groq": "https://api.groq.com/openai/v1",
 }
 
 #: Base URL for the AI API. Leave unset (or set to "") to use the SDK default
