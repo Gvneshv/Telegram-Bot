@@ -62,7 +62,7 @@ async def handle_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE
     """
     _, ai = get_user_state(context)
     text = update.message.text
-    answer = await ai.get_response(text)
+    answer = await ai.add_message(text)
     await send_text(update, context, answer)
 
 
@@ -104,11 +104,11 @@ async def handle_translator_message(update: Update, context: ContextTypes.DEFAUL
     """
     _, ai = get_user_state(context)
     text = update.message.text
-    answer = await ai.get_response(text)
+    answer = await ai.add_message(text)
     
     await send_text_buttons(update, context, answer, {
         "translate_change": "Змінити мову 🌐",
-        "translate_end":    "Закінчити ✖️",
+        "translate_end_btn":    "Закінчити ✖️",
     })
 
 
@@ -127,7 +127,7 @@ async def handle_rec_message(update: Update, context: ContextTypes.DEFAULT_TYPE)
     """
     _, ai = get_user_state(context)
     text = update.message.text
-    answer = await ai.get_response(text)
+    answer = await ai.add_message(text)
     
     await send_text_buttons(update, context, answer, {
         "recommendations_dislike": "Не подобається 👎",

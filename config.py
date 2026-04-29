@@ -78,7 +78,7 @@ OPENAI_API_KEY: str = _require("OPENAI_API_KEY")
 # explicitly set in the environment.
 _DEFAULT_MODELS: dict[str, str] = {
     "openai": "gpt-4o-mini",
-    "groq": "llama3-70b-8192",
+    "groq": "llama-3.3-70b-versatile",   # llama3-70b-8192 was decommissioned April 2026
 }
 
 #: The model that will be used for chat completions.

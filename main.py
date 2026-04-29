@@ -22,7 +22,6 @@ Or via Docker:
 
 import asyncio
 import html
-import json
 import logging
 import traceback
 
@@ -116,11 +115,14 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     message = (
         "<b>An exception was raised while handling an update.</b>\n\n"
-        f"<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}</pre>\n\n"
-        f"<pre>chat_data  = {html.escape(str(context.chat_data))}</pre>\n"
-        f"<pre>user_data  = {html.escape(str(context.user_data))}</pre>\n\n"
         f"<pre>{html.escape(tb_string)}</pre>"
     )
+
+    # Telegram hard-limits messages to 4096 characters.
+    # Truncate with a clear marker rather than letting send_message fail.
+    if len(message) > 4096:
+        message = message[:4050] + "\n...<truncated></pre>"
+
 
     # Send to the chat where the error occurred, if can determine it.
     if isinstance(update, Update) and update.effective_chat:

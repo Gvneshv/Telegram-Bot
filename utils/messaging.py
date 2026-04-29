@@ -136,7 +136,7 @@ async def send_text_buttons(
     # clearest layout for menus with more than two options.
     keyboard = [
         [InlineKeyboardButton(label, callback_data=key)]
-        for label, key in buttons.items()
+        for key, label in buttons.items()
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 

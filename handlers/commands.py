@@ -16,13 +16,11 @@ can be extended without modifying any function bodies.
 """
 
 import logging
-from multiprocessing import context
 
 from telegram import Update
 from telegram.ext import ContextTypes
 
 from state import get_user_state
-import state
 from utils.messaging import send_html, send_image, send_text, send_text_buttons, show_main_menu
 from utils.resources import load_message, load_prompt
 
@@ -92,7 +90,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     state.reset()   # Clear any stale state from a previous session.
     ai.set_prompt("You are a helpful Telegram bot assistant.")
 
-    text = load_message("welcome")
+    text = load_message("main")
     await send_image(update, context, "main")
     await send_html(update, context, text)
 
@@ -336,7 +334,7 @@ async def translator(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         "translate_italian": "Італійська 🇮🇹",
         "translate_french":  "Французька 🇫🇷",
         "translate_spanish": "Іспанська 🇪🇸",
-        "translate_end":     "Закінчити ✖️",
+        "translate_end_btn":     "Закінчити ✖️",
     })
 
 
@@ -367,9 +365,16 @@ async def select_language(update: Update, context: ContextTypes.DEFAULT_TYPE, ca
     # subsequent text to handle_translator_message().
     state.mode = "translator"
 
+    # Tell the AI which language to use. The reply is discarded — it is an
+    # internal acknowledgment of the language setting, not user-facing content.
+    await ai.add_message(keyword)
+
+    # Show the user a clean prompt in with action buttons.
     await send_image(update, context, "translator")
-    answer = await ai.add_message(keyword)
-    await send_text(update, context, answer)
+    await send_text_buttons(update, context, "Що бажаєте перекласти?", {
+        "translate_change": "Змінити мову 🌐",
+        "translate_end_btn":    "Закінчити ✖️",
+    })
 
 
 # ---------------------------------------------------------------------------
