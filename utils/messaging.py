@@ -105,20 +105,22 @@ async def send_text_buttons(
         context: ContextTypes.DEFAULT_TYPE,
         text: str,
         buttons: dict[str, str],
+        columns: int = 1,
 ) -> Message:
     """
     Send a message with an inline keyboard attached.
  
-    Each entry in ``buttons`` becomes one keyboard row with a single button.
-    The dict key is used as the ``callback_data`` value (what the bot
-    receives when the button is pressed); the dict value is the visible
-    button label.
+    Each entry in ``buttons`` becomes one button. By default every button
+    occupies its own row (``columns=1``). Pass ``columns=2`` (or more) to
+    arrange buttons in a grid — useful for main menus where vertical space
+    is limited.
  
     Args:
         update:  The incoming Telegram update.
         context: The handler context provided by python-telegram-bot.
         text:    The message text shown above the keyboard.
         buttons: Ordered mapping of ``{callback_data: button_label}``.
+        columns:  How many buttons to place on each row (default 1).
  
     Returns:
         The ``Message`` object returned by the Telegram API.
@@ -129,15 +131,24 @@ async def send_text_buttons(
             "opt_yes": "✅ Yes",
             "opt_no":  "❌ No",
         })
+
+        await send_text_buttons(update, context, "Main menu:", {
+            "menu_gpt":   "🤖 GPT",
+            "menu_quiz":  "❓ Quiz",
+            "menu_talk":  "🗣 Talk",
+            "menu_cv":    "📄 CV",
+        }, columns=2)
     """
     safe_text = text.encode('utf-16', errors='surrogatepass').decode('utf-16')
     
     # Build one row per button so they stack vertically, which is the
     # clearest layout for menus with more than two options.
-    keyboard = [
-        [InlineKeyboardButton(label, callback_data=key)]
+    items = [
+        InlineKeyboardButton(label, callback_data=key)
         for key, label in buttons.items()
     ]
+    # Group flat list into rows of `columns` buttons each.
+    keyboard = [items[i:i + columns] for i in range(0, len(items), columns)]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     return await context.bot.send_message(
