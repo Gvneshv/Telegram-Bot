@@ -80,8 +80,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     Handle the /start command — show the main menu.
  
     Resets all user state so there is no carry-over from a previous
-    feature session. Sends the main image, the welcome message, and
-    registers all available slash commands in the Telegram menu.
+    feature session. Sends the main image, the welcome message, registers
+    all available slash commands in the Telegram menu, and shows an inline
+    keyboard so users can launch any feature with a single tap.
  
     This function is also called programmatically by other handlers
     (e.g. when the user presses an "End" button) to return to the menu.
@@ -92,20 +93,34 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     text = load_message("main")
     await send_image(update, context, "main")
-    await send_html(update, context, text)
 
     await show_main_menu(update, context, {
         "start":             "Головне меню 🏠",
-        "random":            "Випадковий цікавий факт 🧠",
-        "gpt":               "Запитати ChatGPT 🤖",
-        "talk":              "Поговорити з відомою особистістю 👤",
-        "quiz":              "Взяти участь у квізі ❓",
-        "translator":        "Перекласти текст 🌐",
-        "voice_chat_gpt":    "Голосовий ChatGPT 🎙",
-        "recommendations":   "Рекомендації фільмів, книг і музики 🎬",
-        "image_recognition": "Розпізнавання зображень 🖼",
-        "cv":                "Згенерувати резюме 📄",
+        # "random":            "Випадковий цікавий факт 🧠",
+        # "gpt":               "Запитати ChatGPT 🤖",
+        # "talk":              "Поговорити з відомою особистістю 👤",
+        # "quiz":              "Взяти участь у квізі ❓",
+        # "translator":        "Перекласти текст 🌐",
+        # "voice_chat_gpt":    "Голосовий ChatGPT 🎙",
+        # "recommendations":   "Рекомендації фільмів, книг і музики 🎬",
+        # "image_recognition": "Розпізнавання зображень 🖼",
+        # "cv":                "Згенерувати резюме 📄",
     })
+
+    # Inline quick-launch menu — 2-column grid, grouped by similarity.
+    # Buttons are paired intentionally: text features left, media right;
+    # voice + image together since both are provider-limited on Groq.
+    await send_text_buttons(update, context, text, {
+        "menu_gpt":             "🤖 GPT чат",
+        "menu_random":          "🎲 Цікавий факт",
+        "menu_talk":            "🗣 Розмова",
+        "menu_quiz":            "❓ Квіз",
+        "menu_translator":      "🌐 Перекладач",
+        "menu_recommendations": "🎬 Рекомендації",
+        "menu_voice":           "🎙 Голосовий чат",
+        "menu_image":           "🖼 Розпізнавання",
+        "menu_cv":              "📄 Резюме",
+    }, columns=2)
 
 
 # ---------------------------------------------------------------------------

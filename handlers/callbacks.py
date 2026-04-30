@@ -29,14 +29,19 @@ from telegram.ext import ContextTypes
 
 from handlers.commands import (
     cv,
+    gpt,
+    image_recognition,
     quiz,
+    random as random_command,
     recommendations,
     select_category,
     select_language,
     send_quiz_question,
     start,
     start_persona,
-    translator
+    talk,
+    translator,
+    voice_chat_gpt,
 )
 
 from state import get_user_state
@@ -124,6 +129,21 @@ _ROUTES: dict[str, object] = {
     # --- CV ---
     "cv_start_over": _cv_start_over,
     "cv_end_btn": start,
+
+    # --- Main menu (quick-launch buttons on /start) ---
+    "menu_gpt":             gpt,
+    "menu_random":          random_command,
+    "menu_talk":            talk,
+    "menu_quiz":            quiz,
+    "menu_translator":      translator,
+    "menu_recommendations": recommendations,
+    "menu_cv":              cv,
+    "menu_voice":           voice_chat_gpt,
+    "menu_image":           image_recognition,
+
+    # --- Random fact ---
+    "more_btn": random_command,
+    "end_btn":  start,
 }
 
 
@@ -175,19 +195,6 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     query = update.callback_query.data
     logger.debug(f"Received callback query: {query!r} from user {update.effective_user.id}")
-
-    # --- Special cases that need a local import to avoid circular imports ---
-    # "more_btn" and "end_btn" come from the /random feature. Importing
-    # `random` at the top of this file would create a circular dependency
-    # (commands → callbacks → commands), so we import it here instead.
-    if query == "more_btn":
-        from handlers.commands import random as random_fact
-        await random_fact(update, context)
-        return
-    
-    if query == "end_btn":
-        await start(update, context)
-        return
     
     # --- Standard routing via the _ROUTES table ---
     handler = _ROUTES.get(query)
