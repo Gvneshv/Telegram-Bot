@@ -420,6 +420,13 @@ async def voice_chat_gpt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 # /recommendations
 # ---------------------------------------------------------------------------
 
+# Maps state.category to the "already seen/read/listened" button label.
+_SEEN_LABELS: dict[str, str] = {
+    "movies": "Вже дивився 👀",
+    "books":  "Вже читав 📖",
+    "music":  "Вже слухав 🎧",
+}
+
 async def recommendations(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handle /recommendations — show the category selection menu.
@@ -465,7 +472,10 @@ async def select_category(update: Update, context: ContextTypes.DEFAULT_TYPE, ca
     """
     state, ai = get_user_state(context)
     state.mode = "recommendations_started"
-    state.category = category
+
+    # Only update state.category for real category picks, not for feedback actions.
+    if category not in ("dislike", "seen"):
+        state.category = category
 
     # Maps the category key to the message sent to the AI.
     # "dislike" asks for different recommendations in the same category.
@@ -474,6 +484,7 @@ async def select_category(update: Update, context: ContextTypes.DEFAULT_TYPE, ca
         "books":   "Книги",
         "music":   "Музика",
         "dislike": "Не подобається. Надішли інше у тій же категорії та жанрі",
+        "seen":    "Вже бачив/читав/слухав і сподобалось. Порекомендуй щось схоже",
     }
 
     message = _category_messages.get(category)
@@ -482,15 +493,15 @@ async def select_category(update: Update, context: ContextTypes.DEFAULT_TYPE, ca
         return
 
     answer = await ai.add_message(message)
+
+    seen_label = _SEEN_LABELS.get(state.category, "Вже бачив 👀")
     
-    if category == "dislike":
-        # After a dislike, keep showing the dislike + end buttons.
-        await send_text_buttons(update, context, answer, {
-            "recommendations_dislike":  "Не подобається 👎",
-            "recommendations_end_btn":  "Закінчити ✖️",
-        })
-    else:
-        await send_text(update, context, answer)
+    await send_text_buttons(update, context, answer, {
+        "recommendations_seen": seen_label,
+        "recommendations_dislike": "Не подобається 👎",
+        "recommendations_change": "Змінити категорію 🔀",
+        "recommendations_end_btn": "Закінчити ✖️",
+    })
 
 
 # ---------------------------------------------------------------------------

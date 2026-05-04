@@ -55,6 +55,12 @@ _INPUT_BLOCKED_MODES = {
     "quiz",      # Quiz topic selection screen — waiting for a button tap
 }
 
+_SEEN_LABELS: dict[str, str] = {
+    "movies": "Вже дивився 👀",
+    "books":  "Вже читав 📖",
+    "music":  "Вже слухав 🎧",
+}
+
 
 # ---------------------------------------------------------------------------
 # Feature-specific text handlers
@@ -139,12 +145,16 @@ async def handle_rec_message(update: Update, context: ContextTypes.DEFAULT_TYPE)
         update:  The incoming Telegram update.
         context: The handler context provided by python-telegram-bot.
     """
-    _, ai = get_user_state(context)
+    state, ai = get_user_state(context)
     text = update.message.text
     answer = await ai.add_message(text)
+
+    seen_label = _SEEN_LABELS.get(state.category, "Вже бачив 👀")
     
     await send_text_buttons(update, context, answer, {
+        "recommendations_seen": seen_label,
         "recommendations_dislike": "Не подобається 👎",
+        "recommendations_change": "Змінити категорію 🔀",
         "recommendations_end_btn": "Закінчити ✖️",
     })
 
@@ -211,25 +221,25 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     voice_output_path = f"voice_{chat_id}_output.mp3"
 
     try:
-        # Step 1: Download the voice file from Telegram.
+        # Download the voice file from Telegram.
         file_id = update.message.voice.file_id
         bot = update.get_bot()
         file = await bot.get_file(file_id)
         await file.download_to_drive(voice_input_path)
         logger.debug(f"Downloaded voice message from user {chat_id} to {voice_input_path}")
 
-        # Step 2: Transcribe to text using Whisper (STT).
+        # Transcribe to text using Whisper (STT).
         transcript = await ai.speech_to_text(voice_input_path)
         logger.debug(f"Transcribed voice message from user {chat_id}: {transcript!r}")
 
-        # Step 3: Send the transcript to the AI and get a text response.
+        # Send the transcript to the AI and get a text response.
         await ai.add_message(transcript)  # Add the user's message to the conversation history.
         text_answer = await ai.add_message(transcript)
 
-        # Step 4: Synthesise the response as audio using TTS.
+        # Synthesise the response as audio using TTS.
         await ai.text_to_speech(text_answer, voice_output_path)
 
-        # Step 5: Send the audio file back to the user.
+        # Send the audio file back to the user.
         with open(voice_output_path, "rb") as audio:
             await bot.send_voice(chat_id=chat_id, voice=audio)
     

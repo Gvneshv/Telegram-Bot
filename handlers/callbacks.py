@@ -123,7 +123,9 @@ _ROUTES: dict[str, object] = {
     "recommendations_movies": lambda u, c: select_category(u, c, "movies"),
     "recommendations_books": lambda u, c: select_category(u, c, "books"),
     "recommendations_music": lambda u, c: select_category(u, c, "music"),
-    "recommendations_dislike": lambda u, c: select_category(u, c, feedback="dislike"),
+    "recommendations_seen": lambda u, c: select_category(u, c, "seen"),
+    "recommendations_dislike": lambda u, c: select_category(u, c, "dislike"),
+    "recommendations_change": recommendations,
     "recommendations_end_btn": _recommendations_end,
 
     # --- CV ---
