@@ -41,6 +41,20 @@ from utils.messaging import send_text, send_text_buttons
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Input blocking
+# ---------------------------------------------------------------------------
+# Modes where only button interaction is expected. Any text arriving while
+# the bot is in one of these modes is silently ignored.
+# To block a new mode: just add its string here — nothing else changes.
+
+_INPUT_BLOCKED_MODES = {
+    "default",   # Before any feature is selected (/start was shown)
+    "random",    # Random facts — two buttons, no text input needed
+    "talk",      # Persona selection screen — waiting for a button tap
+    "quiz",      # Quiz topic selection screen — waiting for a button tap
+}
+
 
 # ---------------------------------------------------------------------------
 # Feature-specific text handlers
@@ -341,6 +355,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         "handle_message: mode=%r, translation=%r",
         mode, state.translation,
     )
+
+    # Silentry drop incomming messages when the current mode is buttons-only
+    if mode in _INPUT_BLOCKED_MODES:
+        logger.debug(
+            "handle_message: mode=%r is input-blocked, ignoring text from chat_id=%s.",
+            mode, update.effective_chat.id,
+        )
+        return
 
     if mode == "gpt":
         await handle_text_message(update, context)
