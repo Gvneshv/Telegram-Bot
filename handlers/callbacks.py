@@ -31,6 +31,7 @@ from handlers.commands import (
     cv,
     gpt,
     image_recognition,
+    model_selection,
     quiz,
     random as random_command,
     recommendations,
@@ -44,10 +45,17 @@ from handlers.commands import (
     voice_chat_gpt,
 )
 
-from state import get_user_state
+from services.providers import PROVIDERS, available_providers, get_provider
+from state import get_user_state, set_user_provider
 from utils.messaging import send_text
 
 logger = logging.getLogger(__name__)
+
+# Built once at import time. Contains callback_data strings for providers
+# that have no API key — used in handle_callback to fire show_alert popups.
+_UNAVAILABLE_PROVIDER_CALLBACKS: frozenset[str] = frozenset(
+    p.callback_data for p in PROVIDERS if p not in available_providers()
+)
 
 
 # ---------------------------------------------------------------------------
@@ -87,12 +95,41 @@ async def _cv_start_over(u: Update, c: ContextTypes.DEFAULT_TYPE) -> None:
     await cv(u, c)
 
 
+async def _select_provider(update: Update, context: ContextTypes.DEFAULT_TYPE, provider_key: str) -> None:
+    """Activate the chosen provider and proceed to the feature menu."""
+    provider = get_provider(provider_key)
+    if provider is None:
+        logger.error("Unknown provider key: %s", provider_key)
+        return
+    
+    set_user_provider(context, provider)
+
+    # Show which features are limited with this provider.
+    warnings = []
+    if not provider.supports_voice:
+        warnings.append("🎙 Голосовий чат — недоступний")
+    if not provider.supports_vision:
+        warnings.append("🖼 Розпізнавання зображень — недоступне")
+    
+    if warnings:
+        note = "⚠️ З цією моделлю деякі функції обмежені:\n" + "\n".join(warnings)
+        await send_text(update, context, note)
+    
+    # Hand off to the regular feature menu.
+    await start(update, context)
+
+
 # The main routing table. Keys are callback_data strings exactly as set
 # in the InlineKeyboardButton definitions in handlers/commands.py.
 _ROUTES: dict[str, object] = {
     # Note: "more_btn" and "end_btn" (random facts feature) are handled as
     # special cases directly in handle_callback below to avoid a circular
     # import between this module and handlers/commands.py.
+
+    # --- Model selection ---
+    "model_groq":   lambda u, c: _select_provider(u, c, "groq"),
+    "model_openai": lambda u, c: _select_provider(u, c, "openai"),
+    # "model_gemini": lambda u, c: _select_provider(u, c, "gemini")
 
     # --- Quiz ---
     "quiz_prog": lambda u, c: _set_quiz_theme_and_ask(u, c, "quiz_prog"),
@@ -190,12 +227,47 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         update:  The incoming Telegram update containing the callback query.
         context: The handler context provided by python-telegram-bot.
     """
+    query = update.callback_query.data
+
+    # --- Locked provider buttons: answer with an alert popup, then stop. ---
+    # This must happen before the general answer() below so we can pass
+    # show_alert=True with a custom message instead of a blank acknowledgement.
+    if query in _UNAVAILABLE_PROVIDER_CALLBACKS:
+        provider = get_provider(query.replace("model_", ""))
+        note = provider.unavailable_note if provider else "Цей провайдер недоступний."
+        await update.callback_query.answer(text=note, show_alert=True)
+        return
+    
+    # --- Locked feature buttons (depends on active provider capabilities) ---
+    if query in ("menu_voice", "menu_image"):
+        state, _ = get_user_state(context)
+        provider = get_provider(state.provider) if state.provider else None
+        if query == "menu_voice" and provider and not provider.supports_voice:
+            await update.callback_query.answer(
+                text=(
+                    "🎙 Голосовий чат недоступний для цієї моделі.\n\n"
+                    "Оберіть ШІ модель з доступом до голосових функцій через /model."
+                ), 
+                show_alert=True
+            )
+            return
+        
+        if query == "menu_image" and provider and not provider.supports_vision:
+            await update.callback_query.answer(
+                text=(
+                    "🖼 Розпізнавання зображень недоступне для цієї моделі.\n\n"
+                    "Оберіть ШІ модель з доступом до розпізнавання зображень через /model."
+                ), 
+                show_alert=True
+            )
+            return
+
+
     # Always answer the callback query first. This removes the loading
     # spinner from the button and prevents "query timeout" errors in
     # the Telegram client if the handler takes a moment to complete.
     await update.callback_query.answer()
 
-    query = update.callback_query.data
     logger.debug(f"Received callback query: {query!r} from user {update.effective_user.id}")
     
     # --- Standard routing via the _ROUTES table ---

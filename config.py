@@ -63,16 +63,19 @@ def _require(name: str) -> str:
 BOT_TOKEN: str = _require("BOT_TOKEN")
 
 # ---------------------------------------------------------------------------
-# AI Provider
+# AI Provider — now optional at startup; provider is chosen per-user at runtime.
+# Keys are read directly from the environment by services/providers.py.
+# config.py no longer needs to know about them at module load time.
 # ---------------------------------------------------------------------------
 
-#: Which AI provider to use. Supported values are "openai", "groq".
-#: Additional providers can be added in services/ai_factory.py later.
-AI_PROVIDER: str = os.getenv("AI_PROVIDER", "openai").strip().lower()
+# Which AI provider to use.
+# Additional providers can be added in services/ai_factory.py later.
+AI_PROVIDER: str = os.getenv("AI_PROVIDER", "").strip().lower()
 
-#: Raw API key — works for both OpenAI and Groq (they share the same param
-#: name in the OpenAI-compatible SDK).
-OPENAI_API_KEY: str = _require("OPENAI_API_KEY")
+# Kept for backward compatibility with factory.py / log_config_summary.
+# Will be None if not set — that is now valid and expected.
+OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")
+GROQ_API_KEY:   str | None = os.getenv("GROQ_API_KEY")
 
 # Default model names per provider. These are used when AI_MODEL is not
 # explicitly set in the environment.
@@ -83,7 +86,7 @@ _DEFAULT_MODELS: dict[str, str] = {
 
 #: The model that will be used for chat completions.
 #: Can be overridden via the AI_MODEL environment variable.
-AI_MODEL: str = os.getenv("AI_MODEL", "").strip() or _DEFAULT_MODELS.get(AI_PROVIDER, "gpt-4o-mini")
+AI_MODEL: str = os.getenv("AI_MODEL", "").strip()
 
 # Default base URLs per provider. OpenAI's SDK uses its own default when
 # base URL is None, so we only need to set this explicitly for other providers.
@@ -95,7 +98,7 @@ _DEFAULT_BASE_URLS: dict[str, str] = {
 #: Base URL for the AI API. Leave unset (or set to "") to use the SDK default
 #: (correct for standard OpenAI usage). Must be set for Groq and other
 #: OpenAI-compatible providers.
-AI_BASE_URL: str | None = os.getenv("AI_BASE_URL", "").strip() or _DEFAULT_BASE_URLS.get(AI_PROVIDER)
+AI_BASE_URL: str | None = os.getenv("AI_BASE_URL", "").strip() or None
 
 
 # ---------------------------------------------------------------------------
@@ -119,9 +122,11 @@ def log_config_summary() -> None:
     """
 
     logger = logging.getLogger(__name__)
+
+    from services.providers import available_providers
+    available = [p.key for p in available_providers()]
+
     logger.info("=== Bot configuration ===")
-    logger.info("  AI provider : %s", AI_PROVIDER)
-    logger.info("  AI model    : %s", AI_MODEL)
-    logger.info("  Base URL    : %s", AI_BASE_URL or "(SDK default)")
+    logger.info("  Available providers : %s", available or "none — all locked!")
     logger.info("  Log level   : %s", LOG_LEVEL)
     logger.info("=========================")

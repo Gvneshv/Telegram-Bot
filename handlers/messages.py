@@ -49,10 +49,11 @@ logger = logging.getLogger(__name__)
 # To block a new mode: just add its string here — nothing else changes.
 
 _INPUT_BLOCKED_MODES = {
-    "default",   # Before any feature is selected (/start was shown)
-    "random",    # Random facts — two buttons, no text input needed
-    "talk",      # Persona selection screen — waiting for a button tap
-    "quiz",      # Quiz topic selection screen — waiting for a button tap
+    "default",          # Before any feature is selected (/start was shown)
+    "random",           # Random facts — two buttons, no text input needed
+    "talk",             # Persona selection screen — waiting for a button tap
+    "quiz",             # Quiz topic selection screen — waiting for a button tap
+    "model_selection",  # Model selection screen — waiting for a button tap
 }
 
 _SEEN_LABELS: dict[str, str] = {

@@ -41,6 +41,7 @@ import logging
 from telegram.ext import ContextTypes
 
 from services import AIService, create_ai_service
+from services.providers import ProviderConfig, get_provider
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,9 @@ _STATE_KEY = "dialog_state"
 
 # Key used to store the AIService instance inside context.user_data.
 _AI_KEY = "ai_service"
+
+# Key used to store the PROVIDER_KEY instance inside context.user_data.
+_PROVIDER_KEY = "provider_key"
 
 class DialogState:
     """
@@ -76,6 +80,7 @@ class DialogState:
         "default"                 — No active feature; show main menu.
         "gpt"                     — Free-form GPT chat.
         "dialog_started"          — Talking to a historical figure.
+        "model_selection"         — Model selection screen.
         "quiz"                    — Quiz topic selection screen.
         "quiz_started"            — Quiz in progress; answers expected.
         "voice_chat_gpt"          — Voice message mode.
@@ -92,10 +97,11 @@ class DialogState:
         self.quiz_theme: str = "none"
         self.translation: str = "not_started"
         self.category: str = "none"
+        self.provider: str | None = None
 
     def reset(self) -> None:
         """
-        Reset all state to defaults.
+        Reset all state to defaults. Provider choice is intentionally preserved.
  
         Call this when the user returns to the main menu so that stale
         state from a previous session cannot affect the next one.
@@ -104,7 +110,7 @@ class DialogState:
         self.quiz_theme: str = "none"
         self.translation: str = "not_started"
         self.category: str = "none"
-        logger.debug("DialogState reset to defaults")
+        logger.debug("DialogState reset to defaults (provider preserved: %r)", self.provider)
     
     def __repr__(self) -> str:
         return (f"DialogState(mode={self.mode!r}, quiz_theme={self.quiz_theme!r}, "
@@ -150,3 +156,41 @@ def get_user_state(context: ContextTypes.DEFAULT_TYPE,) -> tuple[DialogState, AI
         logger.debug("Created new AIService for user %s", context._user_id)
     
     return context.user_data[_STATE_KEY], context.user_data[_AI_KEY]
+
+
+def set_user_provider(context: ContextTypes.DEFAULT_TYPE, provider: ProviderConfig) -> None:
+    """
+    Switch the current user's AI service to the given provider.
+
+    Creates a fresh AIService instance for the provider and stores it
+    in context.user_data, replacing any previous instance. Also records
+    the provider key on the user's DialogState.
+
+    Args:
+        context:  The handler context.
+        provider: The ProviderConfig to activate.
+    """
+    import os
+    from services.openai_service import OpenAIService
+    
+    api_key = os.getenv(provider.api_key_env, "")
+    model = os.getenv("AI_MODEL", "").strip() or provider.default_model
+
+    ai = OpenAIService(
+        api_key=api_key,
+        model=model,
+        base_url=provider.base_url,
+    )
+
+    context.user_data[_AI_KEY] = ai
+
+    # Also record the key on DialogState for handlers that need to
+    # check which provider is active (e.g. to show correct feature warnings).
+    state = context.user_data.get(_STATE_KEY)
+    if state:
+        state.provider = provider.key
+
+    logger.info(
+        "Provider switched to %r (model=%r) for user %s",
+        provider.key, model, context._user_id
+    )

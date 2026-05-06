@@ -20,7 +20,8 @@ import logging
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from state import get_user_state
+from state import get_user_state, set_user_provider
+from services.providers import PROVIDERS, available_providers, unavailable_providers
 from utils.messaging import send_html, send_image, send_text, send_text_buttons, show_main_menu
 from utils.resources import load_message, load_prompt
 
@@ -88,14 +89,26 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     (e.g. when the user presses an "End" button) to return to the menu.
     """
     state, ai = get_user_state(context)
+    # If no provider has been chosen yet this session, show model selection first.
+    if state.provider is None:
+        await model_selection(update, context)
+        return
+
     state.reset()   # Clear any stale state from a previous session.
     ai.set_prompt("You are a helpful Telegram bot assistant.")
 
+    # Check active provider capabilities to show locks on unsupported features.
+    from services.providers import get_provider as _get_provider
+    provider = _get_provider(state.provider)
+    supports_voice = provider.supports_voice if provider else True
+    supports_vision = provider.supports_vision if provider else True
+
     text = load_message("main")
-    await send_image(update, context, "main")
+    # await send_image(update, context, "main")
 
     await show_main_menu(update, context, {
         "start":             "Головне меню 🏠",
+        "model":             "Змінити ШІ модель 🔄",
         # "random":            "Випадковий цікавий факт 🧠",
         # "gpt":               "Запитати ChatGPT 🤖",
         # "talk":              "Поговорити з відомою особистістю 👤",
@@ -117,8 +130,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "menu_quiz":            "❓ Квіз",
         "menu_translator":      "🌐 Перекладач",
         "menu_recommendations": "🎬 Рекомендації",
-        "menu_voice":           "🎙 Голосовий чат",
-        "menu_image":           "🖼 Розпізнавання",
+        "menu_voice":           "🎙 Голосовий чат" if supports_voice  else "🎙 Голосовий чат 🔒",
+        "menu_image":           "🖼 Розпізнавання" if supports_vision else "🖼 Розпізнавання 🔒",
         "menu_cv":              "📄 Резюме",
     }, columns=2)
 
@@ -554,3 +567,35 @@ async def cv(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = load_message("cv")
     await send_image(update, context, "cv")
     await send_text(update, context, text)
+
+
+# ---------------------------------------------------------------------------
+# Model selection
+# ---------------------------------------------------------------------------
+async def model_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Show the AI provider selection screen.
+
+    Called at the start of every /start if no provider has been chosen yet,
+    and also directly from the /model command. Available providers get normal
+    buttons; unavailable ones get a 🔒 suffix and fire an alert popup when
+    tapped (handled in callbacks.py before the general answer() call).
+    """
+    buttons = {}
+    for p in PROVIDERS:
+        if p in available_providers():
+            buttons[p.callback_data] = p.label
+        else:
+            # 🔒 suffix signals to the user that this is locked.
+            # Tapping it triggers a show_alert popup in handle_callback.
+            buttons[p.callback_data] = f"{p.label}  🔒"
+    
+    await send_image(update, context, "main")
+    await send_text_buttons(
+        update, context,
+        "👋 *Ласкаво просимо!*\n\n"
+        "Оберіть AI-модель для роботи з ботом.\n"
+        "Доступний функціонал залежить від обраної моделі та її обмежень.\n\n"
+        "🔒 — модель не налаштована адміністратором.",
+        buttons,
+    )

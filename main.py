@@ -43,6 +43,7 @@ from handlers.commands import (
     gpt,
     image_recognition,
     quiz,
+    model_selection,
     random,
     recommendations,
     start,
@@ -121,7 +122,7 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     # Telegram hard-limits messages to 4096 characters.
     # Truncate with a clear marker rather than letting send_message fail.
     if len(message) > 4096:
-        message = message[:4050] + "\n...<truncated></pre>"
+        message = message[:4050] + "\n...[truncated]</pre>"
 
 
     # Send to the chat where the error occurred, if can determine it.
@@ -163,6 +164,7 @@ def _register_handlers(app) -> None:
     app.add_handler(CommandHandler("recommendations",   recommendations))
     app.add_handler(CommandHandler("image_recognition", image_recognition))
     app.add_handler(CommandHandler("cv",                cv))
+    app.add_handler(CommandHandler("model",             model_selection))
 
     # --- Message handlers ---
     # VOICE and PHOTO are registered before TEXT so they take priority

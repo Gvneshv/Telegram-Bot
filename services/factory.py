@@ -2,19 +2,22 @@
 Factory function for creating the active AI service.
  
 The rest of the application never instantiates a particular service class
-directly. Instead it calls ``create_ai_service()``, which reads the
-provider settings from ``config.py`` and returns the appropriate
+directly. Instead it calls ``create_ai_service()``, which picks the first
+available provider from the registry and returns the appropriate
 ``AIService`` implementation.
  
+This is only used as a placeholder on first user contact. The real service
+is swapped in by ``set_user_provider()`` in ``state.py`` once the user
+picks a provider on the model selection screen.
+
 Adding a new provider in the future only requires:
-1. Writing a new class that inherits from ``AIService`` (in its own module).
-2. Adding a branch in ``create_ai_service()`` below.
-Nothing else in the codebase needs to change.
+1. Adding a ProviderConfig entry in services/providers.py.
+2. Nothing here needs to change.
 """
 
 import logging
+import os
 
-import config
 from services.base import AIService
 from services.openai_service import OpenAIService
 
@@ -22,49 +25,45 @@ logger = logging.getLogger(__name__)
 
 def create_ai_service() -> AIService:
     """
-    Instantiate and return the AI service specified in ``config.py``.
- 
-    Reads ``config.AI_PROVIDER``, ``config.OPENAI_API_KEY``,
-    ``config.AI_MODEL``, and ``config.AI_BASE_URL`` to build the service.
- 
+    Create a placeholder AI service for a new user session.
+
+    Uses the first available provider (by key order in providers.py).
+    If no provider keys are configured at all, returns a non-functional
+    placeholder — it will be replaced by set_user_provider() before the
+    user reaches any real AI feature, since model_selection() is always
+    shown first.
+
     Returns:
-        A ready-to-use ``AIService`` instance.
- 
-    Raises:
-        ValueError: If ``config.AI_PROVIDER`` names an unsupported provider.
- 
-    Example:
- 
-        # In main.py
-        from services.factory import create_ai_service
-        ai = create_ai_service()
+        A ready-to-use ``AIService`` instance (or an inert placeholder).
     """
-    provider = config.AI_PROVIDER
-    logger.info("Creating AI service for provider: %s", provider)
+    from services.providers import available_providers
 
-    if provider in ("openai", "groq"):
-        # Both OpenAI and Groq use the same SDK-compatible client.
-        # The difference is purely in base_url and model, both of which
-        # config.py resolves automatically based on AI_PROVIDER.
-        return OpenAIService(
-            api_key=config.OPENAI_API_KEY,
-            model=config.AI_MODEL,
-            base_url=config.AI_BASE_URL,
+    providers = available_providers()
+
+    if not providers:
+        logger.warning(
+            "No AI provider API keys found in environment. "
+            "All providers will appear locked on the model selection screen. "
+            "Returning a placeholder service — no AI calls will succeed until "
+            "the user picks a provider (which requires a key to be configured)."
         )
-    
-    # ----------------------------------------------------------------
-    # Future providers — add branches here:
-    #
-    # elif provider == "gemini":
-    #     from services.gemini_service import GeminiService
-    #     return GeminiService(api_key=config.OPENAI_API_KEY, model=config.AI_MODEL)
-    #
-    # elif provider == "ollama":
-    #     from services.ollama_service import OllamaService
-    #     return OllamaService(model=config.AI_MODEL, base_url=config.AI_BASE_URL)
-    # ----------------------------------------------------------------
+        # Return a non-crashing placeholder. It will never be used for real
+        # AI calls because model_selection() blocks the user before that.
+        return OpenAIService(
+            api_key="placeholder",
+            model="none",
+            base_url=None,
+        )
 
-    raise ValueError(
-        f"Unsupported AI provider: '{provider}'. "
-        f"Set AI_PROVIDER in your .env to one of: openai, groq."
+    # Use the first available provider as the initial placeholder.
+    # The user will replace this immediately on the model selection screen.
+    p = providers[0]
+    logger.info(
+        "Initialising placeholder AI service with provider %r (model=%r).", 
+        p.key, os.getenv("AI_MODEL", "").strip() or p.default_model
+    )
+    return OpenAIService(
+        api_key=os.getenv(p.api_key_env, ""),
+        model=os.getenv("AI_MODEL", "").strip() or p.default_model,
+        base_url=p.base_url,
     )
