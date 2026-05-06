@@ -76,12 +76,14 @@ AI_PROVIDER: str = os.getenv("AI_PROVIDER", "").strip().lower()
 # Will be None if not set — that is now valid and expected.
 OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")
 GROQ_API_KEY:   str | None = os.getenv("GROQ_API_KEY")
+GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY")
 
 # Default model names per provider. These are used when AI_MODEL is not
 # explicitly set in the environment.
 _DEFAULT_MODELS: dict[str, str] = {
     "openai": "gpt-4o-mini",
     "groq": "llama-3.3-70b-versatile",   # llama3-70b-8192 was decommissioned April 2026
+    "gemini": "gemini-2.0-flash",
 }
 
 #: The model that will be used for chat completions.
@@ -93,6 +95,7 @@ AI_MODEL: str = os.getenv("AI_MODEL", "").strip()
 _DEFAULT_BASE_URLS: dict[str, str] = {
     "openai": None,  # SDK default
     "groq": "https://api.groq.com/openai/v1",
+    "gemini": "https://generativelanguage.googleapis.com/v1beta/openai/",
 }
 
 #: Base URL for the AI API. Leave unset (or set to "") to use the SDK default

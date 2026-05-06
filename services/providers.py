@@ -48,18 +48,17 @@ PROVIDERS: list[ProviderConfig] = [
         supports_vision=True,
         unavailable_note="OpenAI недоступний: ключ OPENAI_API_KEY не налаштовано.",
     ),
-    # --- Future providers ---
-    # ProviderConfig(
-    #     key="gemini",
-    #     label="✨ Google Gemini  (безкоштовно · зображення)",
-    #     callback_data="model_gemini",
-    #     api_key_env="GEMINI_API_KEY",
-    #     default_model="gemini-2.0-flash",
-    #     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-    #     supports_voice=False,
-    #     supports_vision=True,
-    #     unavailable_note="Gemini недоступний: ключ GEMINI_API_KEY не налаштовано.",
-    # ),
+    ProviderConfig(
+        key="gemini",
+        label="✨ Google Gemini  (Flash 2.0 · безкоштовно · зображення)",
+        callback_data="model_gemini",
+        api_key_env="GEMINI_API_KEY",
+        default_model="gemini-2.0-flash",
+        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+        supports_voice=False,
+        supports_vision=True,
+        unavailable_note="Gemini недоступний: ключ GEMINI_API_KEY не налаштовано.",
+    ),
 ]
 
 

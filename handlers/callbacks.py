@@ -129,7 +129,7 @@ _ROUTES: dict[str, object] = {
     # --- Model selection ---
     "model_groq":   lambda u, c: _select_provider(u, c, "groq"),
     "model_openai": lambda u, c: _select_provider(u, c, "openai"),
-    # "model_gemini": lambda u, c: _select_provider(u, c, "gemini")
+    "model_gemini": lambda u, c: _select_provider(u, c, "gemini"),
 
     # --- Quiz ---
     "quiz_prog": lambda u, c: _set_quiz_theme_and_ask(u, c, "quiz_prog"),
