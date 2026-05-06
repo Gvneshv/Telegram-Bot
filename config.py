@@ -83,7 +83,7 @@ GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY")
 _DEFAULT_MODELS: dict[str, str] = {
     "openai": "gpt-4o-mini",
     "groq": "llama-3.3-70b-versatile",   # llama3-70b-8192 was decommissioned April 2026
-    "gemini": "gemini-2.0-flash",
+    "gemini": "gemini-2.5-flash",
 }
 
 #: The model that will be used for chat completions.

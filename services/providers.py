@@ -50,10 +50,10 @@ PROVIDERS: list[ProviderConfig] = [
     ),
     ProviderConfig(
         key="gemini",
-        label="✨ Google Gemini  (Flash 2.0 · безкоштовно · зображення)",
+        label="✨ Google Gemini  (Flash 2.5 · безкоштовно · зображення)",
         callback_data="model_gemini",
         api_key_env="GEMINI_API_KEY",
-        default_model="gemini-2.0-flash",
+        default_model="gemini-2.5-flash",
         base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
         supports_voice=False,
         supports_vision=True,

@@ -51,6 +51,7 @@ from handlers.commands import (
     translator,
     voice_chat_gpt,
 )
+from handlers.errors import handle_error
 from handlers.messages import handle_image_message, handle_message, handle_voice
 
 
@@ -215,6 +216,9 @@ def main() -> None:
 
     app = ApplicationBuilder().token(config.BOT_TOKEN).build()
     _register_handlers(app)
+
+    # Register the context for error handling.
+    app.add_error_handler(error_handler)
 
     logging.info("Bot is running, polling for updates... Press Ctrl-C to stop.")
     app.run_polling()
