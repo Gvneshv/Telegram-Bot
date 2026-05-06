@@ -27,7 +27,8 @@ built with Python and `python-telegram-bot`.
 - Python 3.12+
 - [Poetry](https://python-poetry.org/) (for local development)
 - A Telegram bot token from [@BotFather](https://t.me/BotFather)
-- An API key from [OpenAI](https://platform.openai.com/) **or** [Groq](https://console.groq.com/) (free)
+- An API key from [OpenAI](https://platform.openai.com/), [Groq](https://console.groq.com/) (free),
+  or [Google AI Studio](https://aistudio.google.com/) (free, no credit card)
 - Docker + Docker Compose (for containerised deployment — optional)
 
 ---
@@ -220,35 +221,22 @@ docker compose up -d --build
 
 ## AI providers
 
-The bot is designed to work with any OpenAI-compatible API. Switching providers
-requires only two lines in your `.env` file.
+The bot supports multiple AI providers. The provider is chosen per-user at
+runtime via the model selection screen and can be changed at any time with `/model`.
 
-| Provider | `AI_PROVIDER` | Cost | Voice/Vision |
-|---|---|---|---|
-| OpenAI | `openai` | Paid (free trial credits for new accounts) | ✅ Full support |
-| Groq | `groq` | Free tier available | ❌ Text only |
+| Provider | Key | Cost | Voice | Vision |
+|---|---|---|---|---|
+| Groq (LLaMA 3.3) | `groq` | Free | ❌ | ❌ |
+| OpenAI (GPT-4o-mini) | `openai` | Paid (free trial credits) | ✅ | ✅ |
+| Google Gemini (Flash 2.5) | `gemini` | Free (20 req/day) | ❌ | ✅ |
 
-To switch to Groq:
+Get a free Gemini key at [Google AI Studio](https://aistudio.google.com/) —
+no credit card required. Create the key inside a **new project** created by AI
+Studio itself for free-tier quota to be allocated automatically.
 
-```env
-OPENAI_API_KEY=your-groq-key-here
-AI_PROVIDER=groq
-```
-
-The correct API base URL (`https://api.groq.com/openai/v1`) and default model
-(`llama3-70b-8192`) are set automatically when `AI_PROVIDER=groq`.
-
----
-
-## Adding a new AI provider (future feature)
-
-The AI layer uses a clean interface (`services/base.py`). To add a new provider:
-
-1. Create `services/<name>_service.py` that subclasses `AIService`.
-2. Add a branch for it in `services/factory.py`.
-3. Add the provider name to `.env.example`.
-
-Nothing outside `services/` needs to change.
+> **Note:** Voice (`/voice_chat_gpt`) and image recognition (`/image_recognition`)
+> require OpenAI. With Groq or Gemini active, those menu buttons show 🔒 and
+> display an explanation popup when tapped.
 
 ---
 

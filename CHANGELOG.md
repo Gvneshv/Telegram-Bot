@@ -11,7 +11,35 @@ A **PATCH** bump means a bug fix with no behaviour change from the user's perspe
 
 ---
 
-## [2.0.0] — in development
+## [2.2.1] — 2026-05-07
+
+### Fixed
+- **Gemini free tier:** `gemini-2.0-flash` removed from Google's free tier; default
+  model updated to `gemini-2.5-flash` (5 RPM · 250 K TPM · 20 RPD free).
+- **AI error handling:** unhandled `RateLimitError`, `InternalServerError`,
+  `APIConnectionError`, and `AuthenticationError` from the OpenAI SDK are now
+  caught by a global error handler (`handlers/errors.py`) and shown to the user as
+  short, friendly Ukrainian messages instead of raw tracebacks.
+
+---
+
+## [2.2.0] — 2026-05-06
+
+### Added
+- **Google Gemini provider** (`gemini-2.5-flash`) enabled as a third AI option.
+  Free tier: 1 500 requests/day, no credit card required.
+- `GEMINI_API_KEY` environment variable recognised in `config.py` and `.env.example`.
+- Gemini supports text and image recognition; voice chat remains OpenAI-only.
+
+### Changed
+- `services/providers.py`: Gemini `ProviderConfig` uncommented and added to `PROVIDERS` list.
+- `handlers/callbacks.py`: `"model_gemini"` route added to `_ROUTES` dispatch table.
+- `config.py`: Gemini added to `_DEFAULT_MODELS` and `_DEFAULT_BASE_URLS` reference dicts.
+- `README.md`, `MODELS.md`: provider tables updated to reflect three available providers.
+
+---
+
+## [2.0.0] — 2026-04-30
 
 Complete architectural rewrite. The bot's behaviour from the user's perspective
 is unchanged, but every internal system has been reworked to fix critical bugs
