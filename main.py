@@ -21,13 +21,11 @@ Or via Docker:
 """
 
 import asyncio
-import html
 import logging
 import traceback
 
 import config
 from telegram import Update
-from telegram.constants import ParseMode
 from telegram.ext import (
     ApplicationBuilder,
     CallbackQueryHandler,
@@ -77,65 +75,6 @@ def _configure_logging() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Error handler
-# ---------------------------------------------------------------------------
-
-async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Log unhandled exceptions and notify the chat where the error occurred.
- 
-    python-telegram-bot calls this for any exception that propagates out of
-    a handler function. It logs the full traceback at ERROR level and sends
-    a formatted HTML message to the chat so the user knows something went
-    wrong.
- 
-    The message includes the full traceback and the raw update, which is
-    useful during development. For a production deployment you may want to
-    send the detailed report only to a dedicated admin chat and show the
-    user a simpler "something went wrong" message.
- 
-    Args:
-        update:  The update that caused the error (may not be a
-                 ``telegram.Update`` instance in some edge cases).
-        context: The handler context; ``context.error`` holds the exception.
-    """
-    logger = logging.getLogger(__name__)
-    logger.error("Unhandled exception in handler:", exc_info=context.error)
-
-    # Build the traceback string.
-    tb_lines = traceback.format_exception(
-        None, 
-        context.error, 
-        context.error.__traceback__
-    )
-    tb_string = "".join(tb_lines)
-
-    # Serialise the update for display.
-    update_str = (
-        update.to_dict() if isinstance(update, Update) else str(update)
-    )
-
-    message = (
-        "<b>An exception was raised while handling an update.</b>\n\n"
-        f"<pre>{html.escape(tb_string)}</pre>"
-    )
-
-    # Telegram hard-limits messages to 4096 characters.
-    # Truncate with a clear marker rather than letting send_message fail.
-    if len(message) > 4096:
-        message = message[:4050] + "\n...[truncated]</pre>"
-
-
-    # Send to the chat where the error occurred, if can determine it.
-    if isinstance(update, Update) and update.effective_chat:
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=message,
-            parse_mode=ParseMode.HTML,
-        )
-
-
-# ---------------------------------------------------------------------------
 # Handler registration
 # ---------------------------------------------------------------------------
 
@@ -181,7 +120,7 @@ def _register_handlers(app) -> None:
     app.add_handler(CallbackQueryHandler(handle_callback))
 
     # --- Error handler ---
-    app.add_error_handler(error_handler)
+    app.add_error_handler(handle_error)
 
 
 # ---------------------------------------------------------------------------
@@ -216,9 +155,6 @@ def main() -> None:
 
     app = ApplicationBuilder().token(config.BOT_TOKEN).build()
     _register_handlers(app)
-
-    # Register the context for error handling.
-    app.add_error_handler(error_handler)
 
     logging.info("Bot is running, polling for updates... Press Ctrl-C to stop.")
     app.run_polling()
