@@ -28,6 +28,7 @@ from telegram import (
 
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
+from telegram.error import BadRequest
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +40,10 @@ async def send_text(
     """
     Send a plain Markdown message to the current chat.
  
-    Uses ``ParseMode.MARKDOWN``. If the text contains an odd number of
-    underscores (which would break Markdown parsing), the function logs a
-    warning and falls back to sending the message as plain HTML to avoid
-    a Telegram API error crashing the bot.
+    Attempts to send with ``ParseMode.MARKDOWN``. If Telegram rejects the
+    message due to unbalanced or malformed Markdown entities, the function
+    logs a warning and retries automatically as plain unstyled text so the
+    user always receives the content.
  
     Args:
         update:  The incoming Telegram update.
@@ -52,23 +53,24 @@ async def send_text(
     Returns:
         The ``Message`` object returned by the Telegram API.
     """
-    # Odd number of underscores breaks Markdown — fall back to HTML.
-    if text.count('_') % 2 != 0:
-        logger.warning(
-            "send_text: text contains an odd number of underscores, "
-            "which is invalid Markdown. Falling back to send_html."
-        )
-        return await send_html(update, context, text)
-    
     # Re-encode through UTF-16 to handle surrogate characters that can
     # appear in some Unicode text (e.g. certain emoji sequences).
     safe_text = text.encode('utf-16', errors='surrogatepass').decode('utf-16')
 
-    return await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=safe_text,
-        parse_mode=ParseMode.MARKDOWN,
-    )
+    try:
+        return await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=safe_text,
+            parse_mode=ParseMode.MARKDOWN,
+        )
+    except BadRequest as e:
+        if "can't parse entities" in str(e).lower():
+            logger.warning("send_text: Markdown parse failed (%s) — retrying as plain text.", e)
+            return await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text=safe_text,
+            )
+        raise
 
 async def send_html(
         update: Update,

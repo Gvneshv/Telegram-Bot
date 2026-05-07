@@ -12,6 +12,7 @@ import logging
 import openai
 from telegram import Update
 from telegram.ext import ContextTypes
+from telegram.error import BadRequest
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,18 @@ async def handle_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> No
             "⚠️ Помилка автентифікації AI провайдера.\n\n"
             "API ключ відсутній або недійсний. "
             "Перевірте налаштування у файлі .env."
+        )
+    elif isinstance(error, BadRequest) and "can't parse entities" in str(error).lower():
+        logger.warning("Telegram entity parse error (malformed AI markdown): %s", error)
+        msg = (
+            "⚠️ AI повернув текст із некоректним форматуванням, і Telegram не зміг його відобразити.\n\n"
+            "Спробуйте ще раз — зазвичай наступна відповідь виходить нормально."
+        )
+    elif isinstance(error, BadRequest):
+        logger.warning("Telegram BadRequest: %s", error)
+        msg = (
+            "⚠️ Не вдалося надіслати повідомлення — Telegram відхилив запит.\n\n"
+            "Спробуйте ще раз або поверніться до меню: /start"
         )
     else:
         logger.error("Unhandled exception in handler:", exc_info=error, stack_info=True)
