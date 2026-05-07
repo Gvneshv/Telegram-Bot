@@ -104,6 +104,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     supports_vision = provider.supports_vision if provider else True
 
     text = load_message("main")
+    image_name = f"main_{state.provider}" if state.provider else "main"
+    await send_image(update, context, image_name)
     # await send_image(update, context, "main")
 
     await show_main_menu(update, context, {
