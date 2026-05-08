@@ -122,10 +122,6 @@ async def _select_provider(update: Update, context: ContextTypes.DEFAULT_TYPE, p
 # The main routing table. Keys are callback_data strings exactly as set
 # in the InlineKeyboardButton definitions in handlers/commands.py.
 _ROUTES: dict[str, object] = {
-    # Note: "more_btn" and "end_btn" (random facts feature) are handled as
-    # special cases directly in handle_callback below to avoid a circular
-    # import between this module and handlers/commands.py.
-
     # --- Model selection ---
     "model_groq":   lambda u, c: _select_provider(u, c, "groq"),
     "model_openai": lambda u, c: _select_provider(u, c, "openai"),
@@ -134,7 +130,8 @@ _ROUTES: dict[str, object] = {
     # --- Quiz ---
     "quiz_prog": lambda u, c: _set_quiz_theme_and_ask(u, c, "quiz_prog"),
     "quiz_math": lambda u, c: _set_quiz_theme_and_ask(u, c, "quiz_math"),
-    "quiz_biology": lambda u, c: _set_quiz_theme_and_ask(u, c, "quiz_biology"),
+    "quiz_physics": lambda u, c: _set_quiz_theme_and_ask(u, c, "quiz_physics"),
+    "quiz_cinema": lambda u, c: _set_quiz_theme_and_ask(u, c, "quiz_cinema"),
     "quiz_more": _quiz_more,
     "quiz_change_theme": _quiz_change_theme,
     "quiz_end_btn": start,
@@ -145,6 +142,7 @@ _ROUTES: dict[str, object] = {
     "talk_3": lambda u, c: start_persona(u, c, "talk_3"),
     "talk_4": lambda u, c: start_persona(u, c, "talk_4"),
     "talk_5": lambda u, c: start_persona(u, c, "talk_5"),
+    "talk_6": lambda u, c: start_persona(u, c, "talk_6"),
     "talk_end_btn": start,
 
     # --- Translator ---

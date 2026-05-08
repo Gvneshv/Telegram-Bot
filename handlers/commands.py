@@ -40,35 +40,41 @@ logger = logging.getLogger(__name__)
 #   2. Add a button for it in the ``talk()`` function's button dict.
 #   3. Add a prompt file at resources/prompts/talk_<key>.txt
 #   4. Add an image at resources/images/talk_<key>.jpg
+#   5. Add the correspondent person to resources/messages/talk.txt
 #
 # No other code needs to change.
 
 PERSONAS: dict[str, dict[str, str]] = {
     "talk_1": {
-        "image": "talk_cobain",
-        "prompt": "talk_cobain",
-        "greeting": "Привіт. Кобейн говорить. Шо там по питаннях?",
+        "image": "talk_mercury",
+        "prompt": "talk_mercury",
+        "greeting": "Серденько, ти тут, щоб поговорити з самим Фредді Мерк'юрі! Я слухаю. 🎤",
     },
     "talk_2": {
         "image": "talk_queen",
         "prompt": "talk_queen",
-        "greeting": "Наливайте 'Ерл Ґрей', до вас говорить Королева.",
+        "greeting": "Наливайте 'Ерл Ґрей', до вас говорить Королева. 👑",
     },
     "talk_3": {
         "image": "talk_tolkien",
         "prompt": "talk_tolkien",
-        "greeting": "Вітання із Середзем'я. Тут Толкін, що бажаєш обговорити?",
+        "greeting": "Вітання із Середзем'я. Тут Толкін, що бажаєш обговорити? 🧙‍♂️",
     },
     "talk_4": {
         "image": "talk_nietzsche",
         "prompt": "talk_nietzsche",
-        "greeting": "Guten Tag. Ніцше на зв'язку. Які питання вас турбують?",
+        "greeting": "Guten Tag. Ніцше на зв'язку. Які питання вас турбують? ✍️",
     },
     "talk_5": {
         "image": "talk_hawking",
         "prompt": "talk_hawking",
-        "greeting": "Привіт, це Стівен Вільям Гокінг. Про що хочеш поговорити?",
+        "greeting": "Привіт, це Стівен Вільям Гокінг. Про що хочеш поговорити? 🪐 ",
     },
+    "talk_6": {
+        "image": "talk_tesla",
+        "prompt": "talk_tesla",
+        "greeting": "Доброго дня. Нікола Тесла. Змінимо світ електрикою — про що говоримо? ⚡",
+    }
 }
 
 
@@ -212,11 +218,12 @@ async def talk(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await send_image(update, context, "talk")
     
     await send_text_buttons(update, context, text, {
-        "talk_1":    "Курт Кобейн — соліст 'Nirvana' 🎸",
+        "talk_1":    "Фредді Мерк'юрі — вокаліст Queen 🎤",
         "talk_2":    "Єлизавета II — Колишня Королева Об'єднаного Королівства 👑",
         "talk_3":    "Джон Толкін — автор 'Володаря Перснів' 📖",
         "talk_4":    "Фрідріх Ніцше — філософ 🧠",
         "talk_5":    "Стівен Гокінг — астрофізик 🔭",
+        "talk_6":    "Нікола Тесла — винахідник та фізик ⚡",
         "talk_end_btn": "Закінчити ✖️",
     })
 
@@ -266,7 +273,8 @@ async def start_persona(update: Update, context: ContextTypes.DEFAULT_TYPE, pers
 _QUIZ_TOPIC_PROMPTS: dict[str, str] = {
     "quiz_prog": "Python",
     "quiz_math": "Math",
-    "quiz_biology": "Biology",
+    "quiz_physics": "Physics",
+    "quiz_cinema": "Cinema and films",
 }
 
 
@@ -290,7 +298,8 @@ async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await send_text_buttons(update, context, text, {
         "quiz_prog":    "Програмування мовою Python 🐍",
         "quiz_math":    "Математика (теорії алгоритмів, множин, матаналіз) ➗",
-        "quiz_biology": "Біологія 🧬",
+        "quiz_physics": "Фізика ⚛️",
+        "quiz_cinema":  "Кіно 🎬",
         "quiz_end_btn": "Закінчити ✖️",
     })
 
