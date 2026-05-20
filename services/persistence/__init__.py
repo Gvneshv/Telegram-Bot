@@ -1,5 +1,5 @@
 """
-Persistence package — pluggable storage backend for user preferences.
+Persistence package - pluggable storage backend for user preferences.
 
 The active backend is a module-level singleton initialised once at startup
 by ``main.py`` via ``init_backend()``. All other modules call
@@ -7,11 +7,11 @@ by ``main.py`` via ``init_backend()``. All other modules call
 
 Available backends
 ------------------
-MemoryBackend  — no-op, identical to pre-persistence behaviour (default).
-SQLiteBackend  — lightweight single-file storage, zero infrastructure.
+MemoryBackend  - no-op, identical to pre-persistence behaviour (default).
+SQLiteBackend  - lightweight single-file storage, zero infrastructure.
 
 To switch backend, set ``PERSISTENCE_BACKEND`` in ``.env``:
-    PERSISTENCE_BACKEND=none    # default — no persistence
+    PERSISTENCE_BACKEND=none    # default - no persistence
     PERSISTENCE_BACKEND=sqlite  # SQLite file at SQLITE_DB_PATH
 """
 

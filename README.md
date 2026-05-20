@@ -13,8 +13,8 @@ for user preferences across bot restarts.
 | `/start` | Main menu |
 | `/random` | Random interesting fact |
 | `/gpt` | Free-form AI chat |
-| `/talk` | Converse with a historical persona (Cobain, Tolkien, Hawking, and more) |
-| `/quiz` | Quiz on Python, Math, or Biology |
+| `/talk` | Converse with a historical persona (Mercury, Tolkien, Hawking, and more) |
+| `/quiz` | Quiz on Python, Math, Physics, or Movies |
 | `/translator` | Translate text into English, German, Italian, French, or Spanish |
 | `/voice_chat_gpt` | Voice message mode — speak and receive a voice reply |
 | `/recommendations` | Movie, book, and music recommendations |
