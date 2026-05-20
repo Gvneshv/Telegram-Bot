@@ -6,7 +6,7 @@ The Problem
 The original project stored all session data in a single global ``Dialog``
 object and a single global ``ChatGptService`` instance. Because these were
 shared across *all* users, any two users interacting with the bot at the
-same time would corrupt each other's state — one user's message could be
+same time would corrupt each other's state - one user's message could be
 routed into another user's quiz, and their messages would be mixed into the
 same AI conversation history.
  
@@ -43,6 +43,8 @@ from telegram.ext import ContextTypes
 from services import AIService, create_ai_service
 from services.providers import ProviderConfig, get_provider
 
+from services.persistence import get_backend
+
 logger = logging.getLogger(__name__)
 
 # Key used to store the DialogState instance inside context.user_data.
@@ -77,19 +79,19 @@ class DialogState:
  
     Modes (valid values for ``self.mode``)::
  
-        "default"                 — No active feature; show main menu.
-        "gpt"                     — Free-form GPT chat.
-        "dialog_started"          — Talking to a historical figure.
-        "model_selection"         — Model selection screen.
-        "quiz"                    — Quiz topic selection screen.
-        "quiz_started"            — Quiz in progress; answers expected.
-        "voice_chat_gpt"          — Voice message mode.
-        "translator"              — Language selection screen.
-        "recommendations"         — Category selection screen.
-        "recommendations_started" — Recommendations in progress.
-        "image_recognition"       — Waiting for an image or URL.
-        "cv"                      — CV generator; collecting user info.
-        "random"                  — Random facts mode.
+        "default"                 - No active feature; show main menu.
+        "gpt"                     - Free-form GPT chat.
+        "dialog_started"          - Talking to a historical figure.
+        "model_selection"         - Model selection screen.
+        "quiz"                    - Quiz topic selection screen.
+        "quiz_started"            - Quiz in progress; answers expected.
+        "voice_chat_gpt"          - Voice message mode.
+        "translator"              - Language selection screen.
+        "recommendations"         - Category selection screen.
+        "recommendations_started" - Recommendations in progress.
+        "image_recognition"       - Waiting for an image or URL.
+        "cv"                      - CV generator; collecting user info.
+        "random"                  - Random facts mode.
     """
 
     def __init__(self) -> None:
@@ -124,7 +126,7 @@ def get_user_state(context: ContextTypes.DEFAULT_TYPE,) -> tuple[DialogState, AI
  
     Both objects are stored inside ``context.user_data`` and created on
     first access (lazy initialisation). On every subsequent call for the
-    same user, the existing objects are returned — preserving conversation
+    same user, the existing objects are returned - preserving conversation
     history and dialog state across messages.
  
     Args:
@@ -143,9 +145,19 @@ def get_user_state(context: ContextTypes.DEFAULT_TYPE,) -> tuple[DialogState, AI
             response = await ai.add_message(update.message.text)
     """
 
-    # Lazily create DialogState for this user on first message.
     if _STATE_KEY not in context.user_data:
-        context.user_data[_STATE_KEY] = DialogState()
+        state = DialogState()
+        # Restore saved provider from the persistence backend (if any).
+        # This is a fast synchronous read - see services/persistence/sqlite.py
+        # for thread-safety notes. Falls back to None if backend is MemoryBackend or if the user has no saved preference.
+        saved_provider = get_backend().load_provider(context._user_id)
+        if saved_provider and get_provider(saved_provider):
+            state.provider = saved_provider
+            logger.debug(
+                "Restored provider %r for user %s from persistence.",
+                saved_provider, context._user_id
+            )
+        context.user_date[_STATE_KEY] = state
         logger.debug("Created new DialogState for user %s", context._user_id)
     
     # Lazily create a dedicated AIService instance for this user.
@@ -189,6 +201,8 @@ def set_user_provider(context: ContextTypes.DEFAULT_TYPE, provider: ProviderConf
     state = context.user_data.get(_STATE_KEY)
     if state:
         state.provider = provider.key
+        # Persist immediately so the choice survives a bot restart
+        get_backend().save_provider(context._user_id, provider.key)
 
     logger.info(
         "Provider switched to %r (model=%r) for user %s",

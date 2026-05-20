@@ -7,15 +7,15 @@ Every other module in the project should import constants from here instead
 of reading environment variables directly.
  
 Required variables (must be set before running the bot):
-    BOT_TOKEN       — Telegram Bot API token (from @BotFather).
-    OPENAI_API_KEY  — OpenAI API key, OR a Groq API key when using Groq.
+    BOT_TOKEN       - Telegram Bot API token (from @BotFather).
+    OPENAI_API_KEY  - OpenAI API key, OR a Groq API key when using Groq.
  
 Optional variables (have sensible defaults):
-    AI_PROVIDER     — Which AI backend to use: "openai" (default) or "groq".
-    AI_MODEL        — Model name override. Defaults depend on the provider.
-    AI_BASE_URL     — Custom API base URL. Required when using Groq or any
+    AI_PROVIDER     - Which AI backend to use: "openai" (default) or "groq".
+    AI_MODEL        - Model name override. Defaults depend on the provider.
+    AI_BASE_URL     - Custom API base URL. Required when using Groq or any
                       other OpenAI-compatible provider.
-    LOG_LEVEL       — Python logging level string, e.g. "INFO" or "DEBUG".
+    LOG_LEVEL       - Python logging level string, e.g. "INFO" or "DEBUG".
                       Defaults to "INFO".
 """
 
@@ -63,7 +63,7 @@ def _require(name: str) -> str:
 BOT_TOKEN: str = _require("BOT_TOKEN")
 
 # ---------------------------------------------------------------------------
-# AI Provider — now optional at startup; provider is chosen per-user at runtime.
+# AI Provider - now optional at startup; provider is chosen per-user at runtime.
 # Keys are read directly from the environment by services/providers.py.
 # config.py no longer needs to know about them at module load time.
 # ---------------------------------------------------------------------------
@@ -73,10 +73,23 @@ BOT_TOKEN: str = _require("BOT_TOKEN")
 AI_PROVIDER: str = os.getenv("AI_PROVIDER", "").strip().lower()
 
 # Kept for backward compatibility with factory.py / log_config_summary.
-# Will be None if not set — that is now valid and expected.
+# Will be None if not set - that is now valid and expected.
 OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")
 GROQ_API_KEY:   str | None = os.getenv("GROQ_API_KEY")
 GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY")
+
+# ---------------------------------------------------------------------------
+# Persistence
+# ---------------------------------------------------------------------------
+
+# Which persistence backend to use.
+# "none"   - in-memory only; no data survives a bot restart (default).
+# "sqlite" - SQLite file; provider preference is restored across restarts.
+PERSISTENCE_BACKEND: str = os.getenv("PERSISTENCE_BACKEND", "none").strip().lower()
+
+# Path to the SQLite database file. Only used when PERSISTENCE_BACKEND=sqlite.
+# The parent directory is created automatically on first run.
+SQLITE_DB_PATH: str = os.getenv("SQLITE_DB_PATH", "data/bot.db").strip()
 
 # Default model names per provider. These are used when AI_MODEL is not
 # explicitly set in the environment.
@@ -121,7 +134,7 @@ def log_config_summary() -> None:
  
     Call this once from main.py after logging is initialised. It helps
     confirm at a glance that the correct provider, model, and log level
-    are active — without printing any sensitive values like API keys.
+    are active - without printing any sensitive values like API keys.
     """
 
     logger = logging.getLogger(__name__)
@@ -130,6 +143,7 @@ def log_config_summary() -> None:
     available = [p.key for p in available_providers()]
 
     logger.info("=== Bot configuration ===")
-    logger.info("  Available providers : %s", available or "none — all locked!")
+    logger.info("  Available providers : %s", available or "none - all locked!")
+    logger.info("  Persistence     : %s", PERSISTENCE_BACKEND)
     logger.info("  Log level   : %s", LOG_LEVEL)
     logger.info("=========================")

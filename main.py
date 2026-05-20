@@ -52,6 +52,10 @@ from handlers.commands import (
 from handlers.errors import handle_error
 from handlers.messages import handle_image_message, handle_message, handle_voice
 
+from services.persistence import init_backend
+from services.persistence.memory import MemoryBackend
+from services.persistence.sqlite import SQLiteBackend
+
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -72,6 +76,30 @@ def _configure_logging() -> None:
     )
     # Suppress per-request GET/POST logs from the HTTP client.
     logging.getLogger("httpx").setLevel(logging.WARNING)
+
+
+# ---------------------------------------------------------------------------
+# Initialize persistence
+# ---------------------------------------------------------------------------
+
+def _init_persistence() -> None:
+    """
+    Initialise the persistence backend from config and register it globally.
+
+    Called once at startup before any handler runs. The chosen backend is
+    stored as a module-level singleton in ``services/persistence/__init__.py``
+    and retrieved by ``state.py`` via ``get_backend()``.
+    """
+    logger = logging.getLogger(__name__)
+
+    if config.PERSISTENCE_BACKEND == 'sqlite':
+        backend = SQLiteBackend(config.SQLITE_DB_PATH)
+        logger.info("Persistence: SQLite at %r", config.SQLITE_DB_PATH)
+    else:
+        backend = MemoryBackend()
+        logger.info("Persistence: in-memory only (set PERSISTENCE_BACKEND=sqlite to enable).")
+
+    init_backend(backend)
 
 
 # ---------------------------------------------------------------------------
@@ -142,6 +170,7 @@ def main() -> None:
         before calling it. This is safe and correct on all Python versions.
     """
     _configure_logging()
+    _init_persistence()
 
     logger = logging.getLogger(__name__)
     config.log_config_summary()
