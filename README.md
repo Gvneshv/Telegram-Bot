@@ -1,7 +1,8 @@
 # Telegram GPT Bot
 
-A feature-rich Telegram bot powered by OpenAI (or Groq as a free alternative),
-built with Python and `python-telegram-bot`.
+A feature-rich Telegram bot powered by multiple AI providers (OpenAI, Groq, Google Gemini),
+built with Python and `python-telegram-bot`. Supports optional SQLite persistence
+for user preferences across bot restarts.
 
 ---
 
@@ -29,6 +30,7 @@ built with Python and `python-telegram-bot`.
 - A Telegram bot token from [@BotFather](https://t.me/BotFather)
 - An API key from [OpenAI](https://platform.openai.com/), [Groq](https://console.groq.com/) (free),
   or [Google AI Studio](https://aistudio.google.com/) (free, no credit card)
+- SQLite (optional) — built into Python, no installation needed; enables preference persistence
 - Docker + Docker Compose (for containerised deployment — optional)
 
 ---
@@ -237,6 +239,27 @@ Studio itself for free-tier quota to be allocated automatically.
 > **Note:** Voice (`/voice_chat_gpt`) and image recognition (`/image_recognition`)
 > require OpenAI. With Groq or Gemini active, those menu buttons show 🔒 and
 > display an explanation popup when tapped.
+
+---
+
+## Persistence (optional)
+
+By default the bot is stateless — user preferences reset on every restart.
+Enable SQLite persistence with one line in `.env`:
+
+```env
+PERSISTENCE_BACKEND=sqlite
+SQLITE_DB_PATH=data/bot.db     # optional; this is the default path
+```
+
+With persistence enabled, each user's chosen AI provider is remembered across
+bot restarts — they go straight to the feature menu without re-selecting their model.
+
+> **Docker users:** the `./data:/app/data` volume is already configured in
+> `docker-compose.yml`. The database file survives container restarts automatically.
+>
+> **Security:** `data/` is listed in `.gitignore` and must never be committed —
+> it contains Telegram user IDs.
 
 ---
 
