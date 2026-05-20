@@ -44,6 +44,7 @@ services:
     # a full image rebuild — just `docker compose restart` after edits.
     volumes:
       - ./resources:/app/resources:ro
+      - ./data:/app/data
     
     # Resource limits — prevents the bot from consuming unbounded memory
     # on the host in case of a memory leak or runaway loop.

@@ -164,7 +164,7 @@ def main() -> None:
 
     Note on Python 3.14 compatibility:
         In Python 3.14, ``asyncio.get_event_loop()`` no longer creates a new
-        event loop automatically if none exists — it raises ``RuntimeError``
+        event loop automatically if none exists - it raises ``RuntimeError``
         instead. ``python-telegram-bot``'s ``run_polling()`` calls this
         internally, so we must explicitly create and register an event loop
         before calling it. This is safe and correct on all Python versions.

@@ -11,6 +11,30 @@ A **PATCH** bump means a bug fix with no behaviour change from the user's perspe
 
 ---
 
+## [2.3.0] — 2026-05-19
+
+### Added
+- **Opt-in persistence layer** for user preferences across bot restarts.
+  Set `PERSISTENCE_BACKEND=sqlite` in `.env` to enable. Default (`none`)
+  is a no-op — identical behaviour to all previous versions.
+- `services/persistence/` package with a clean abstract `PersistenceBackend`
+  interface, a `MemoryBackend` no-op, and a `SQLiteBackend` implementation.
+- `PERSISTENCE_BACKEND` and `SQLITE_DB_PATH` config variables in `config.py`
+  and `.env.example`.
+- Provider preference now survives bot restarts when SQLite backend is active —
+  users are taken directly to the feature menu without re-selecting their model.
+
+### Changed
+- `state.py`: `get_user_state()` restores saved provider on first access;
+  `set_user_provider()` persists the new choice immediately.
+- `main.py`: `_init_persistence()` called at startup to wire the backend.
+- `config.log_config_summary()` now logs the active persistence backend.
+- `docker-compose.yml`: added `./data:/app/data` volume so SQLite DB
+  survives container restarts.
+- `.gitignore`: `data/` added to prevent DB file from being committed.
+
+---
+
 ## [2.2.1] — 2026-05-07
 
 ### Fixed

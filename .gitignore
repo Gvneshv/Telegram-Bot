@@ -203,7 +203,9 @@ images/*.gif
 # --- Secrets ---
 # The real .env file with your tokens. NEVER commit this.
 # Use .env.example (which is committed) as a template.
+# The data/bot.db file contains user IDs and provider preferences. It should never be committed.
 .env
+data/
  
 # The old credentials file from v1 — replaced by .env in v2.
 credentials.py
