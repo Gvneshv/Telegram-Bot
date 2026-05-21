@@ -11,24 +11,25 @@ import logging
 
 import openai
 from telegram import Update
+from telegram.error import BadRequest, TimedOut
 from telegram.ext import ContextTypes
-from telegram.error import BadRequest
 
 logger = logging.getLogger(__name__)
+
 
 async def handle_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Top-level error handler. Called by python-telegram-bot whenever an
     exception propagates out of any registered handler.
 
-    Maps known AI provider errors to short, clear messages.
-    All other errors are logged in full and produce a generic reply.
+    Maps known AI provider errors and transient network errors to short,
+    clear messages. All other errors are logged in full and produce a generic reply.
     """
     error = context.error
 
     if isinstance(error, openai.RateLimitError):
         msg = (
-            "⚠️ Провайдер AI тимчасово недоступний — перевищено ліміт запитів.\n\n"
+            "⚠️ Провайдер AI тимчасово недоступний - перевищено ліміт запитів.\n\n"
             "Зачекайте кілька хвилин і спробуйте знову, "
             "або оберіть іншого провайдера через /model."
         )
@@ -49,16 +50,21 @@ async def handle_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> No
             "API ключ відсутній або недійсний. "
             "Перевірте налаштування у файлі .env."
         )
+    elif isinstance(error, TimedOut):
+        # Transient network hiccup - Telegram's servers didn't respond in time.
+        # This is usually harmless and self-correcting; no user action needed.
+        logger.warning("Telegram API timed out (transient, no action needed): %s", error)
+        return
     elif isinstance(error, BadRequest) and "can't parse entities" in str(error).lower():
         logger.warning("Telegram entity parse error (malformed AI markdown): %s", error)
         msg = (
             "⚠️ AI повернув текст із некоректним форматуванням, і Telegram не зміг його відобразити.\n\n"
-            "Спробуйте ще раз — зазвичай наступна відповідь виходить нормально."
+            "Спробуйте ще раз - зазвичай наступна відповідь виходить нормально."
         )
     elif isinstance(error, BadRequest):
         logger.warning("Telegram BadRequest: %s", error)
         msg = (
-            "⚠️ Не вдалося надіслати повідомлення — Telegram відхилив запит.\n\n"
+            "⚠️ Не вдалося надіслати повідомлення - Telegram відхилив запит.\n\n"
             "Спробуйте ще раз або поверніться до меню: /start"
         )
     else:
@@ -67,6 +73,6 @@ async def handle_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> No
             "❌ Виникла неочікувана помилка.\n\n"
             "Спробуйте ще раз або поверніться до меню: /start"
         )
-    
+
     if isinstance(update, Update) and update.effective_message:
         await update.effective_message.reply_text(msg)

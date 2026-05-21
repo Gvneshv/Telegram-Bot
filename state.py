@@ -157,7 +157,7 @@ def get_user_state(context: ContextTypes.DEFAULT_TYPE,) -> tuple[DialogState, AI
                 "Restored provider %r for user %s from persistence.",
                 saved_provider, context._user_id
             )
-        context.user_date[_STATE_KEY] = state
+        context.user_data[_STATE_KEY] = state
         logger.debug("Created new DialogState for user %s", context._user_id)
     
     # Lazily create a dedicated AIService instance for this user.

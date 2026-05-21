@@ -604,7 +604,7 @@ async def model_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await send_image(update, context, "main")
     await send_text_buttons(
         update, context,
-        "👋 *Ласкаво просимо!*\n\n"
+        "👋 Ласкаво просимо!\n\n"
         "Оберіть AI-модель для роботи з ботом.\n"
         "Доступний функціонал залежить від обраної моделі та її обмежень.\n\n"
         "🔒 — модель не налаштована адміністратором.",
