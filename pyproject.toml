@@ -1,6 +1,6 @@
 [tool.poetry]
 name        = "telegram-gpt-bot"
-version     = "2.0.0"
+version     = "2.3.1"
 description = "A Telegram bot with GPT-powered features: chat, quiz, translator, voice, CV generator, and more."
 authors     = ["gxneshx"]
 readme      = "README.md"

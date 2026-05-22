@@ -10,6 +10,22 @@ A **MINOR** bump means a new feature added in a backward-compatible way.
 A **PATCH** bump means a bug fix with no behaviour change from the user's perspective.
 
 ---
+ 
+## [2.3.1] — 2025-05-22
+ 
+### Fixed
+ 
+- **`services/persistence/base.py`** — `load_provider`, `save_provider`, and `close`
+  were accidentally indented inside a stray `get_user_prompt` method body, making
+  Python's ABC register only `get_user_prompt` as abstract. This caused
+  `TypeError: Can't instantiate abstract class MemoryBackend` on startup.
+  Removed the spurious method; restored the three real abstract methods to class level.
+- **`handlers/errors.py`** — Transient `telegram.error.TimedOut` exceptions (e.g.
+  Telegram API slowness during `send_photo`) fell through to the generic `else` branch,
+  producing a full multi-screen traceback in the CLI. Added a dedicated branch that logs
+  a single `WARNING` line and returns early without messaging the user.
+
+---
 
 ## [2.3.0] — 2026-05-19
 
